@@ -25,7 +25,20 @@ save_mod_rewrite_rules();
 
 // Keep this fixture seed idempotent: the runner invokes it before every E2E run.
 function jp_e2e_page( string $slug, string $title, int $parent_id = 0 ): int {
-    $existing = get_page_by_path( $slug, OBJECT, 'page' );
+    $matches = get_posts( array(
+        'post_type' => 'page',
+        'post_status' => 'any',
+        'title' => $title,
+        'numberposts' => -1,
+    ) );
+    $existing = null;
+    foreach ( $matches as $match ) {
+        if ( $slug === $match->post_name && $parent_id === (int) $match->post_parent ) {
+            $existing = $match;
+        } elseif ( $slug === $match->post_name || str_starts_with( $match->post_name, $slug . '-' ) ) {
+            wp_delete_post( $match->ID, true );
+        }
+    }
     $page = array(
         'post_type' => 'page',
         'post_status' => 'publish',

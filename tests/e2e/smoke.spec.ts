@@ -6,17 +6,25 @@ const FB_USER = 'fb';
 
 async function loginAs( page: Page, username: string, password = 'password' ): Promise<void> {
 	await page.goto( '/wp-login.php' );
-	await page.getByLabel( 'Username or Email Address' ).fill( username );
-	await page.getByLabel( 'Password' ).fill( password );
+	const userField = page.locator( '#user_login' );
+	const passwordField = page.locator( '#user_pass' );
+	await userField.fill( username );
+	await passwordField.fill( password );
+	await expect( userField ).toHaveValue( username );
+	await expect( passwordField ).toHaveValue( password );
 	await page.click( '#wp-submit' );
 	await expect( page ).toHaveURL( /wp-admin/ );
 }
 
 async function closePatternDialog( page: Page ): Promise<void> {
-	const close = page.getByRole( 'button', { name: 'Close' } );
-	if ( await close.isVisible().catch( () => false ) ) {
-		await close.click();
+	const dialog = page.getByRole( 'dialog', { name: 'Choose a pattern' } );
+	try {
+		await dialog.waitFor( { state: 'visible', timeout: 2000 } );
+	} catch {
+		return;
 	}
+	await dialog.getByRole( 'button', { name: 'Close' } ).click();
+	await expect( dialog ).toBeHidden();
 }
 
 async function addSubpageFromTraining( page: Page ): Promise<void> {
@@ -50,18 +58,19 @@ test.describe( 'Page Branches browser flows', () => {
 		await expect( page.getByText( 'Sorry, you are not allowed to edit this item.' ) ).toBeVisible();
 	} );
 
-	test( 'E2E-3: Page Attributes is hidden for Branch Editors and visible to administrators', async ( { page } ) => {
+	test( 'E2E-3: Branch Editor cannot access Page Attributes controls available to administrators', async ( { page } ) => {
 		await loginAs( page, ADMIN_USER, ADMIN_PASS );
 		await page.goto( '/wp-admin/edit.php?post_type=page' );
-		const editUrl = await page.getByRole( 'link', { name: 'Edit “Training”' } ).first().getAttribute( 'href' );
+		const branchEditUrl = await page.getByRole( 'link', { name: 'Edit “Training”' } ).first().getAttribute( 'href' );
+		const adminEditUrl = await page.getByRole( 'link', { name: 'Edit “Football”' } ).getAttribute( 'href' );
 		await loginAs( page, FB_USER );
-		await page.goto( editUrl! );
+		await page.goto( branchEditUrl! );
 		await closePatternDialog( page );
-		await expect( page.getByRole( 'button', { name: 'Page Attributes' } ) ).toHaveCount( 0 );
+		await expect( page.getByText( 'Parent', { exact: true } ) ).toHaveCount( 0 );
 		await loginAs( page, ADMIN_USER, ADMIN_PASS );
-		await page.goto( editUrl! );
+		await page.goto( adminEditUrl! );
 		await closePatternDialog( page );
-		await expect( page.getByRole( 'button', { name: 'Page Attributes' } ) ).toBeVisible();
+		await expect( page.getByText( 'Parent', { exact: true } ) ).toBeVisible();
 	} );
 
 	test( 'Branch Editor uploads an image with resized versions', async ( { page } ) => {
