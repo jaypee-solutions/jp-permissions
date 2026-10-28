@@ -36,13 +36,12 @@ require_once __DIR__ . '/includes/class-group-repository.php';
 require_once __DIR__ . '/includes/class-branch-policy.php';
 require_once __DIR__ . '/includes/class-capabilities.php';
 require_once __DIR__ . '/includes/class-groups-page.php';
-
 GroupsPage::init();
-
+require_once __DIR__ . '/includes/class-lifecycle.php';
+Lifecycle::init();
 Updates::init();
 BranchPolicy::init();
 Capabilities::init();
-register_activation_hook( PLUGIN_FILE, array( Capabilities::class, 'register_role' ) );
 
 /**
  * Bootstrap.

@@ -11,14 +11,8 @@ final class Capabilities {
     public static function init(): void {
         add_filter( 'user_has_cap', array( self::class, 'grant' ), 10, 4 );
         add_filter( 'map_meta_cap', array( self::class, 'map' ), 10, 4 );
-        self::register_role();
     }
 
-    public static function register_role(): void {
-        if ( ! get_role( 'jp_branch_editor' ) ) {
-            add_role( 'jp_branch_editor', __( 'Branch Editor', 'jp-permissions' ), array( 'read' => true, 'upload_files' => true ) );
-        }
-    }
 
     public static function grant( array $allcaps, array $caps, array $args, \WP_User $user ): array {
         if ( ! empty( $allcaps['edit_others_pages'] ) || empty( GroupRepository::groups_for_user( (int) $user->ID ) ) ) {

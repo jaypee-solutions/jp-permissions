@@ -145,3 +145,30 @@ function add_action( string $hook, $callback, int $priority = 10, int $accepted_
 function is_admin(): bool {
     return false;
 }
+$GLOBALS['jp_permissions_test_multisite'] = false;
+$GLOBALS['jp_permissions_test_roles'] = [];
+$GLOBALS['jp_permissions_test_hooks'] = [];
+
+function is_multisite(): bool {
+    return $GLOBALS['jp_permissions_test_multisite'];
+}
+
+function register_activation_hook( string $file, $callback ): void {
+    $GLOBALS['jp_permissions_test_hooks']['activation'] = $callback;
+}
+
+function register_uninstall_hook( string $file, $callback ): void {
+    $GLOBALS['jp_permissions_test_hooks']['uninstall'] = $callback;
+}
+
+function wp_die( string $message ): void {
+    throw new \RuntimeException( $message );
+}
+
+function get_role( string $role ) {
+    return $GLOBALS['jp_permissions_test_roles'][ $role ] ?? null;
+}
+
+function add_role( string $role, string $name, array $capabilities ): void {
+    $GLOBALS['jp_permissions_test_roles'][ $role ] = (object) array( 'name' => $name, 'capabilities' => $capabilities );
+}
