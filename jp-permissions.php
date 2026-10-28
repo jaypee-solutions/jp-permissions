@@ -41,6 +41,7 @@ GroupsPage::init();
 require_once __DIR__ . '/includes/class-lifecycle.php';
 require_once __DIR__ . '/includes/class-write-guard.php';
 require_once __DIR__ . '/includes/class-groups-page.php';
+require_once __DIR__ . '/includes/class-user-profile.php';
 require_once __DIR__ . '/includes/class-lifecycle.php';
 
 Updates::init();
@@ -50,6 +51,7 @@ Capabilities::init();
 Editor::init();
 WriteGuard::init();
 GroupsPage::init();
+UserProfile::init();
 
 /**
  * Bootstrap.
