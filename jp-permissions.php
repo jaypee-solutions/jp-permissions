@@ -40,6 +40,7 @@ require_once __DIR__ . '/includes/class-groups-page.php';
 GroupsPage::init();
 require_once __DIR__ . '/includes/class-lifecycle.php';
 require_once __DIR__ . '/includes/class-write-guard.php';
+require_once __DIR__ . '/includes/class-page-creation.php';
 require_once __DIR__ . '/includes/class-groups-page.php';
 require_once __DIR__ . '/includes/class-user-profile.php';
 require_once __DIR__ . '/includes/class-lifecycle.php';
@@ -50,6 +51,7 @@ BranchPolicy::init();
 Capabilities::init();
 Editor::init();
 WriteGuard::init();
+PageCreation::init();
 GroupsPage::init();
 UserProfile::init();
 
