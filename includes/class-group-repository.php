@@ -38,11 +38,11 @@ final class GroupRepository {
 
     public static function save( ?int $id, string $name, array $roots, array $members ): int|\WP_Error {
         $name = trim( $name );
-        if ( '' === $name || strlen( $name ) > 100 ) {
+        if ( '' === $name || mb_strlen( $name, 'UTF-8' ) > 100 ) {
             return new \WP_Error( 'jp_permissions_invalid_name' );
         }
         foreach ( self::all() as $other_id => $group ) {
-            if ( $id !== $other_id && 0 === strcasecmp( $name, $group['name'] ) ) {
+            if ( $id !== $other_id && mb_strtolower( $name, 'UTF-8' ) === mb_strtolower( $group['name'], 'UTF-8' ) ) {
                 return new \WP_Error( 'jp_permissions_duplicate_name' );
             }
         }
@@ -51,6 +51,8 @@ final class GroupRepository {
         if ( null === $id ) {
             $id = is_array( $config ) && isset( $config['next_id'] ) ? absint( $config['next_id'] ) : 1;
             $id = max( 1, $id );
+        } elseif ( ! isset( $groups[ $id ] ) ) {
+            return new \WP_Error( 'jp_permissions_missing_group' );
         }
         $groups[ $id ] = array( 'name' => $name, 'roots' => self::valid_roots( $roots ), 'members' => self::valid_members( $members ) );
         update_option( self::OPTION, array(

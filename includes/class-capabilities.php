@@ -9,12 +9,12 @@ use WP_Post;
 
 final class Capabilities {
     public static function init(): void {
-        add_filter( 'user_has_cap', array( self::class, 'grant' ), 10, 4 );
-        add_filter( 'map_meta_cap', array( self::class, 'map' ), 10, 4 );
+        add_filter( 'user_has_cap', array( self::class, 'grant_page_capabilities' ), 10, 4 );
+        add_filter( 'map_meta_cap', array( self::class, 'map_page_meta_capability' ), 10, 4 );
     }
 
 
-    public static function grant( array $allcaps, array $caps, array $args, \WP_User $user ): array {
+    public static function grant_page_capabilities( array $allcaps, array $caps, array $args, \WP_User $user ): array {
         if ( ! empty( $allcaps['edit_others_pages'] ) || empty( GroupRepository::groups_for_user( (int) $user->ID ) ) ) {
             return $allcaps;
         }
@@ -24,7 +24,7 @@ final class Capabilities {
         return $allcaps;
     }
 
-    public static function map( array $caps, string $cap, int $user_id, array $args ): array {
+    public static function map_page_meta_capability( array $caps, string $cap, int $user_id, array $args ): array {
         if ( ! BranchPolicy::is_restricted( $user_id ) ) {
             return $caps;
         }
