@@ -91,7 +91,7 @@ $users = array(
     'sub' => jp_e2e_user( 'sub', 'subscriber' ),
 );
 foreach ( array( 'E2E Football Page', 'E2E Image Upload' ) as $title ) {
-    foreach ( get_posts( array( 'post_type' => 'page', 'post_status' => 'any', 'title' => $title, 'numberposts' => -1 ) ) as $post ) {
+    foreach ( get_posts( array( 'post_type' => 'page', 'post_status' => array( 'publish', 'draft', 'pending', 'future', 'private', 'auto-draft' ), 'title' => $title, 'numberposts' => -1 ) ) as $post ) {
         wp_delete_post( $post->ID, true );
     }
 }
