@@ -36,6 +36,7 @@ require_once __DIR__ . '/includes/class-group-repository.php';
 require_once __DIR__ . '/includes/class-branch-policy.php';
 require_once __DIR__ . '/includes/class-capabilities.php';
 require_once __DIR__ . '/includes/class-editor.php';
+require_once __DIR__ . '/includes/class-groups-page.php';
 require_once __DIR__ . '/includes/class-lifecycle.php';
 require_once __DIR__ . '/includes/class-write-guard.php';
 require_once __DIR__ . '/includes/class-pages-list.php';
