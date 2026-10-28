@@ -37,6 +37,7 @@ require_once __DIR__ . '/includes/class-branch-policy.php';
 require_once __DIR__ . '/includes/class-capabilities.php';
 require_once __DIR__ . '/includes/class-write-guard.php';
 require_once __DIR__ . '/includes/class-groups-page.php';
+require_once __DIR__ . '/includes/class-user-profile.php';
 require_once __DIR__ . '/includes/class-lifecycle.php';
 
 Updates::init();
@@ -45,6 +46,7 @@ BranchPolicy::init();
 Capabilities::init();
 WriteGuard::init();
 GroupsPage::init();
+UserProfile::init();
 
 /**
  * Bootstrap.
