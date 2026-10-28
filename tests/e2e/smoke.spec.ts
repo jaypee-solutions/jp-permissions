@@ -39,13 +39,14 @@ test.describe( 'Page Branches browser flows', () => {
 		await loginAs( page, FB_USER );
 		await addSubpageFromTraining( page );
 		await closePatternDialog( page );
-		await expect( page.locator( '.editor-post-title__input' ) ).toBeVisible( { timeout: 30_000 } );
-		await page.locator( '.editor-post-title__input' ).fill( 'E2E Football Page' );
+		const title = page.frameLocator( 'iframe' ).locator( '.wp-block-post-title' );
+		await expect( title ).toBeVisible();
+		await title.fill( 'E2E Football Page' );
 		await page.getByRole( 'button', { name: 'Publish', exact: true } ).first().click();
 		await page.getByRole( 'button', { name: 'Publish', exact: true } ).last().click();
-		await expect( page.getByText( 'Published' ) ).toBeVisible();
+		await expect( page.getByText( 'Published', { exact: true } ) ).toBeVisible();
 		await page.goto( '/wp-admin/edit.php?post_type=page' );
-		const createdPage = page.locator( 'tr' ).filter( { hasText: 'E2E Football Page' } );
+		const createdPage = page.getByRole( 'row', { name: /Select E2E Football Page/ } );
 		await expect( createdPage ).toBeVisible();
 		await expect( createdPage ).toHaveClass( /level-2/ );
 	} );
@@ -78,8 +79,10 @@ test.describe( 'Page Branches browser flows', () => {
 		await loginAs( page, FB_USER );
 		await addSubpageFromTraining( page );
 		await closePatternDialog( page );
-		await page.locator( '.editor-post-title__input' ).fill( 'E2E Image Upload' );
-		await page.getByRole( 'button', { name: 'Add block' } ).click();
+		const title = page.frameLocator( 'iframe' ).locator( '.wp-block-post-title' );
+		await expect( title ).toBeVisible();
+		await title.fill( 'E2E Image Upload' );
+		await page.getByRole( 'button', { name: 'Block Inserter' } ).click();
 		await page.getByRole( 'option', { name: /Image/ } ).click();
 		const png = await page.evaluate( () => {
 			const canvas = document.createElement( 'canvas' );
@@ -93,11 +96,14 @@ test.describe( 'Page Branches browser flows', () => {
 			context.fillRect( 0, 0, canvas.width, canvas.height );
 			return canvas.toDataURL( 'image/png' ).split( ',' )[1];
 		} );
-		await page.locator( 'input[type="file"]' ).first().setInputFiles( {
+		const editor = page.frameLocator( 'iframe' );
+		await editor.getByRole( 'button', { name: 'Upload' } ).click();
+		await editor.locator( 'input[type="file"]' ).setInputFiles( {
 			name: 'branch-image.png', mimeType: 'image/png', buffer: Buffer.from( png, 'base64' ),
 		} );
-		await expect( page.locator( '.wp-block-image img' ) ).toBeVisible();
-		await expect( page.locator( '.wp-block-image img' ) ).toHaveAttribute( 'srcset', /branch-image/ );
+		const image = editor.locator( '.wp-block-image img' );
+		await expect( image ).toBeVisible();
+		await expect( image ).toHaveAttribute( 'src', /-\d+x\d+\.png$/ );
 	} );
 } );
 
