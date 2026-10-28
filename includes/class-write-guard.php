@@ -18,15 +18,23 @@ final class WriteGuard {
         if ( ! BranchPolicy::is_restricted_context() || ! is_object( $prepared ) ) {
             return $prepared;
         }
-        if ( ! empty( $prepared->ID ) ) {
-            $stored = get_post( (int) $prepared->ID );
-            if ( $stored instanceof WP_Post ) {
-                if ( $request->has_param( 'parent' ) && (int) $prepared->post_parent !== (int) $stored->post_parent ) {
-                    return self::error( 'parent' );
-                }
-                if ( $request->has_param( 'menu_order' ) && (int) $prepared->menu_order !== (int) $stored->menu_order ) {
-                    return self::error( 'order' );
-                }
+        if ( empty( $prepared->ID ) ) {
+            $parent = isset( $prepared->post_parent ) ? get_post( (int) $prepared->post_parent ) : null;
+            if ( ! $parent instanceof WP_Post || 'page' !== $parent->post_type || in_array( $parent->post_status, array( 'auto-draft', 'trash' ), true ) || ! BranchPolicy::is_authorized_page( get_current_user_id(), $parent ) ) {
+                return self::error( 'parent' );
+            }
+            if ( isset( $prepared->menu_order ) && 0 !== (int) $prepared->menu_order ) {
+                return self::error( 'order' );
+            }
+            return $prepared;
+        }
+        $stored = get_post( (int) $prepared->ID );
+        if ( $stored instanceof WP_Post ) {
+            if ( $request->has_param( 'parent' ) && (int) $prepared->post_parent !== (int) $stored->post_parent ) {
+                return self::error( 'parent' );
+            }
+            if ( $request->has_param( 'menu_order' ) && (int) $prepared->menu_order !== (int) $stored->menu_order ) {
+                return self::error( 'order' );
             }
         }
         return $prepared;

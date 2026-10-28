@@ -52,7 +52,7 @@ final class PageCreation {
 
     public static function redirect_generic_new_page(): void {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The redirect is a read-only navigation.
-        if ( ! is_admin() || ! BranchPolicy::is_restricted_context() || 'post-new.php' !== $GLOBALS['pagenow'] || 'page' !== sanitize_key( wp_unslash( $_GET['post_type'] ?? 'post' ) ) ) {
+        if ( ! BranchPolicy::is_restricted_context() || 'post-new.php' !== $GLOBALS['pagenow'] || 'page' !== sanitize_key( wp_unslash( $_GET['post_type'] ?? 'post' ) ) ) {
             return;
         }
         wp_safe_redirect( add_query_arg( 'jp_permissions_notice', 'use_add_subpage', admin_url( 'edit.php?post_type=page' ) ) );

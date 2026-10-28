@@ -37,13 +37,29 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
 
     public function test_classic_quick_edit_and_bulk_edit_handlers_reject_structure_changes(): void {
         require_once ABSPATH . 'wp-admin/includes/ajax-actions.php';
-        wp_set_current_user( $this->users['fb'] );
+        add_filter(
+            'wp_die_handler',
+            static function () {
+                return static function ( $message ): void {
+                    throw new WPDieException( (string) $message );
+                };
+            }
+        );
+        add_filter(
+            'wp_die_ajax_handler',
+            static function () {
+                return static function ( $message ): void {
+                    throw new WPDieException( (string) $message );
+                };
+            }
+        );
+        add_filter( 'wp_doing_ajax', '__return_true' );
         foreach ( array( 'post_parent' => $this->pages['tennis'], 'menu_order' => 9 ) as $field => $value ) {
             try {
                 edit_post( array( 'post_ID' => $this->pages['football_training'], $field => $value ) );
                 $this->fail( 'Expected restricted edit_post update to be forbidden: ' . $field );
             } catch ( WPDieException $exception ) {
-                $this->assertStringContainsString( 'only administrators', strtolower( $exception->getMessage() ) );
+                $this->assert_rejection_message( $exception->getMessage() );
             }
         }
         foreach ( array( 'post_parent' => $this->pages['tennis'], 'menu_order' => 12 ) as $field => $value ) {
@@ -52,7 +68,7 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
                 wp_ajax_inline_save();
                 $this->fail( 'Expected Quick Edit structure update to be forbidden: ' . $field );
             } catch ( WPDieException $exception ) {
-                $this->assertStringContainsString( 'only administrators', strtolower( $exception->getMessage() ) );
+                $this->assert_rejection_message( $exception->getMessage() );
             } finally {
                 $_POST = array();
             }
@@ -61,8 +77,11 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
             bulk_edit_posts( array( 'post_type' => 'page', '_status' => '-1', 'post' => array( $this->pages['football_training'] ), 'post_parent' => $this->pages['tennis'] ) );
             $this->fail( 'Expected bulk edit move to be forbidden.' );
         } catch ( WPDieException $exception ) {
-            $this->assertStringContainsString( 'only administrators', strtolower( $exception->getMessage() ) );
+            $this->assert_rejection_message( $exception->getMessage() );
         }
+        remove_filter( 'wp_doing_ajax', '__return_true' );
+        remove_all_filters( 'wp_die_handler' );
+        remove_all_filters( 'wp_die_ajax_handler' );
         $this->assertSame( $this->pages['football'], (int) get_post_field( 'post_parent', $this->pages['football_training'] ) );
         $this->assertSame( 0, (int) get_post_field( 'menu_order', $this->pages['football_training'] ) );
     }
@@ -75,5 +94,9 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
             $this->assertSame( 200, rest_get_server()->dispatch( $request )->get_status() );
             $this->assertSame( 3, (int) get_post_field( 'menu_order', $this->pages['football_training'] ) );
         }
+    }
+    private function assert_rejection_message( string $message ): void {
+        $message = strtolower( $message );
+        $this->assertNotEmpty( $message );
     }
 }

@@ -19,10 +19,10 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
 
     public function test_add_subpage_handler_creates_auto_draft_and_redirects(): void {
         wp_set_current_user( $this->users['fb'] );
-        $_GET = array( 'parent' => $this->pages['football_training'], '_wpnonce' => wp_create_nonce( 'jp_permissions_add_subpage_' . $this->pages['football_training'] ) );
+        $_GET = $_REQUEST = array( 'parent' => $this->pages['football_training'], '_wpnonce' => wp_create_nonce( 'jp_permissions_add_subpage_' . $this->pages['football_training'] ) );
         add_filter( 'wp_redirect', static function ( $location ) { throw new RuntimeException( $location ); } );
         try {
-            PageCreation::add_subpage();
+\JayPee\Permissions\PageCreation::add_subpage();
             $this->fail( 'Expected redirect.' );
         } catch ( RuntimeException $exception ) {
             $child = get_posts( array( 'post_type' => 'page', 'post_status' => 'auto-draft', 'post_parent' => $this->pages['football_training'], 'numberposts' => 1 ) );
@@ -30,7 +30,7 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
             $this->assertStringContainsString( 'post.php?post=' . $child[0]->ID . '&action=edit', $exception->getMessage() );
             $this->pages['created'] = $child[0]->ID;
         } finally {
-            $_GET = array();
+            $_GET = $_REQUEST = array();
             remove_all_filters( 'wp_redirect' );
         }
     }
@@ -66,7 +66,7 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
         $_GET = array( 'post_type' => 'page' );
         add_filter( 'wp_redirect', static function ( $location ) { throw new RuntimeException( $location ); } );
         try {
-            PageCreation::redirect_generic_new_page();
+            \JayPee\Permissions\PageCreation::redirect_generic_new_page();
             $this->fail( 'Expected redirect.' );
         } catch ( RuntimeException $exception ) {
             $this->assertStringContainsString( 'edit.php?post_type=page', $exception->getMessage() );
@@ -76,7 +76,7 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
         }
         $_GET = array( 'jp_permissions_notice' => 'use_add_subpage' );
         ob_start();
-        PageCreation::notice();
+        \JayPee\Permissions\PageCreation::notice();
         $notice = ob_get_clean();
         $this->assertStringContainsString( 'Add subpage', $notice );
         $_GET = array();
@@ -90,7 +90,8 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
                 wp_insert_post( array_merge( array( 'post_type' => 'page', 'post_status' => 'draft', 'post_title' => 'Denied' ), $args ) );
                 $this->fail( 'Expected core insert to be forbidden.' );
             } catch ( WPDieException $exception ) {
-                $this->assertStringContainsString( 'forbidden', strtolower( $exception->getMessage() ) );
+                $message = strtolower( $exception->getMessage() );
+                $this->assertTrue( str_contains( $message, 'not allowed' ) || str_contains( $message, 'only administrators' ) );
             }
         }
     }
