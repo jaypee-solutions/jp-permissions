@@ -6,8 +6,8 @@ const FB_USER = 'fb';
 
 async function loginAs( page: Page, username: string, password = 'password' ): Promise<void> {
 	await page.goto( '/wp-login.php' );
-	await page.fill( '#user_login', username );
-	await page.fill( '#user_pass', password );
+	await page.getByLabel( 'Username or Email Address' ).fill( username );
+	await page.getByLabel( 'Password' ).fill( password );
 	await page.click( '#wp-submit' );
 	await expect( page ).toHaveURL( /wp-admin/ );
 }
@@ -36,7 +36,9 @@ test.describe( 'Page Branches browser flows', () => {
 		await page.getByRole( 'button', { name: 'Publish', exact: true } ).last().click();
 		await expect( page.getByText( 'Published' ) ).toBeVisible();
 		await page.goto( '/wp-admin/edit.php?post_type=page' );
-		await expect( page.locator( 'tr' ).filter( { hasText: 'E2E Football Page' } ) ).toBeVisible();
+		const createdPage = page.locator( 'tr' ).filter( { hasText: 'E2E Football Page' } );
+		await expect( createdPage ).toBeVisible();
+		await expect( createdPage ).toHaveClass( /level-2/ );
 	} );
 
 	test( 'E2E-2: Branch Editor cannot edit Tennis', async ( { page } ) => {
