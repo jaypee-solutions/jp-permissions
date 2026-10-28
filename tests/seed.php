@@ -90,10 +90,9 @@ $users = array(
     'fb_staff' => jp_e2e_user( 'fb_staff', 'editor' ),
     'sub' => jp_e2e_user( 'sub', 'subscriber' ),
 );
-foreach ( array( 'E2E Football Page', 'E2E Image Upload' ) as $title ) {
-    foreach ( get_posts( array( 'post_type' => 'page', 'post_status' => array( 'publish', 'draft', 'pending', 'future', 'private', 'auto-draft' ), 'title' => $title, 'numberposts' => -1 ) ) as $post ) {
-        wp_delete_post( $post->ID, true );
-    }
+// Fixtures have no pages below Football → Training; everything there was created by earlier E2E runs.
+foreach ( get_posts( array( 'post_type' => 'page', 'post_status' => array_keys( get_post_stati() ), 'post_parent' => $pages['football-training'], 'numberposts' => -1, 'fields' => 'ids' ) ) as $post_id ) {
+    wp_delete_post( $post_id, true );
 }
 foreach ( get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'author' => $users['fb'], 'title' => 'branch-image', 'numberposts' => -1 ) ) as $attachment ) {
     wp_delete_attachment( $attachment->ID, true );
