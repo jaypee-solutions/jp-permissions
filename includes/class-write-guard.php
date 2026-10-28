@@ -33,7 +33,20 @@ final class WriteGuard {
     }
 
     public static function insert_post_data( array $data, array $postarr, array $unsanitized_postarr, bool $update ): array {
-        if ( ! BranchPolicy::is_restricted_context() || 'page' !== ( $data['post_type'] ?? '' ) || 'trash' === ( $data['post_status'] ?? '' ) || ! $update || empty( $postarr['ID'] ) ) {
+        if ( ! BranchPolicy::is_restricted_context() || 'page' !== ( $data['post_type'] ?? '' ) || 'trash' === ( $data['post_status'] ?? '' ) ) {
+            return $data;
+        }
+        if ( ! $update ) {
+            $parent = get_post( (int) ( $data['post_parent'] ?? 0 ) );
+            if ( ! $parent instanceof WP_Post || 'page' !== $parent->post_type || in_array( $parent->post_status, array( 'auto-draft', 'trash' ), true ) || ! BranchPolicy::is_authorized_page( get_current_user_id(), $parent ) ) {
+                self::deny( 'parent' );
+            }
+            if ( (int) ( $data['menu_order'] ?? 0 ) !== 0 ) {
+                self::deny( 'order' );
+            }
+            return $data;
+        }
+        if ( empty( $postarr['ID'] ) ) {
             return $data;
         }
         $stored = get_post( (int) $postarr['ID'] );

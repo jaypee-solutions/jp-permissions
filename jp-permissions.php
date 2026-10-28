@@ -37,13 +37,14 @@ require_once __DIR__ . '/includes/class-branch-policy.php';
 require_once __DIR__ . '/includes/class-capabilities.php';
 require_once __DIR__ . '/includes/class-lifecycle.php';
 require_once __DIR__ . '/includes/class-write-guard.php';
+require_once __DIR__ . '/includes/class-page-creation.php';
 
 Lifecycle::init();
 Updates::init();
 BranchPolicy::init();
 Capabilities::init();
 WriteGuard::init();
-register_activation_hook( PLUGIN_FILE, array( Capabilities::class, 'register_role' ) );
+PageCreation::init();
 
 /**
  * Bootstrap.
