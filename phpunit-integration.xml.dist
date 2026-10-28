@@ -4,7 +4,10 @@
     bootstrap="tests/integration/bootstrap.php" colors="true">
     <testsuites>
         <testsuite name="wordpress-integration">
-            <directory suffix=".php">tests/integration</directory>
+            <directory prefix="test-" suffix=".php">tests/integration</directory>
         </testsuite>
     </testsuites>
+    <extensions>
+        <extension class="Integration_Run_Completion"/>
+    </extensions>
 </phpunit>

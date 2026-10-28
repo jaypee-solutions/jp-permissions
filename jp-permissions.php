@@ -40,14 +40,16 @@ require_once __DIR__ . '/includes/class-groups-page.php';
 GroupsPage::init();
 require_once __DIR__ . '/includes/class-lifecycle.php';
 require_once __DIR__ . '/includes/class-write-guard.php';
+require_once __DIR__ . '/includes/class-groups-page.php';
+require_once __DIR__ . '/includes/class-lifecycle.php';
 
-Lifecycle::init();
 Updates::init();
+Lifecycle::init();
 BranchPolicy::init();
 Capabilities::init();
 Editor::init();
 WriteGuard::init();
-register_activation_hook( PLUGIN_FILE, array( Capabilities::class, 'register_role' ) );
+GroupsPage::init();
 
 /**
  * Bootstrap.
