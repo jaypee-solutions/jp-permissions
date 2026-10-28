@@ -23,13 +23,11 @@ final class Lifecycle {
         self::register_role();
     }
 
+    /** Schema 1 has no migrations yet; add them here when GroupRepository::SCHEMA changes. */
     public static function maybe_upgrade(): void {
         self::register_role();
-        $config = get_option( GroupRepository::OPTION, [] );
-        if ( ! is_array( $config ) || ! isset( $config['schema'] ) || GroupRepository::SCHEMA !== $config['schema'] ) {
-            return;
-        }
     }
+
     public static function register_role(): void {
         if ( ! get_role( 'jp_branch_editor' ) ) {
             add_role( 'jp_branch_editor', __( 'Branch Editor', 'jp-permissions' ), [ 'read' => true, 'upload_files' => true ] );
