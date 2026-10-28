@@ -30,6 +30,14 @@ final class WriteGuard {
         }
         $stored = get_post( (int) $prepared->ID );
         if ( $stored instanceof WP_Post ) {
+            if ( self::is_root( $stored->ID ) ) {
+                if ( $request->has_param( 'slug' ) && $prepared->post_name !== $stored->post_name ) {
+                    return self::error( 'root_change' );
+                }
+                if ( $request->has_param( 'status' ) && $prepared->post_status !== $stored->post_status ) {
+                    return self::error( 'root_change' );
+                }
+            }
             if ( $request->has_param( 'parent' ) && (int) $prepared->post_parent !== (int) $stored->post_parent ) {
                 return self::error( 'parent' );
             }
@@ -41,7 +49,7 @@ final class WriteGuard {
     }
 
     public static function insert_post_data( array $data, array $postarr, array $unsanitized_postarr, bool $update ): array {
-        if ( ! BranchPolicy::is_restricted_context() || 'page' !== ( $data['post_type'] ?? '' ) || 'trash' === ( $data['post_status'] ?? '' ) ) {
+        if ( ! BranchPolicy::is_restricted_context() || 'page' !== ( $data['post_type'] ?? '' ) ) {
             return $data;
         }
         if ( ! $update ) {
@@ -61,6 +69,17 @@ final class WriteGuard {
         if ( ! $stored instanceof WP_Post ) {
             return $data;
         }
+        if ( self::is_root( $stored->ID ) ) {
+            if ( array_key_exists( 'post_name', $unsanitized_postarr ) && $data['post_name'] !== $stored->post_name ) {
+                self::deny( 'root_change' );
+            }
+            if ( array_key_exists( 'post_status', $unsanitized_postarr ) && $data['post_status'] !== $stored->post_status ) {
+                self::deny( 'root_change' );
+            }
+        }
+        if ( 'trash' === ( $data['post_status'] ?? '' ) ) {
+            return $data;
+        }
         if ( array_key_exists( 'post_parent', $unsanitized_postarr ) && (int) $data['post_parent'] !== (int) $stored->post_parent ) {
             self::deny( 'parent' );
         }
@@ -70,7 +89,19 @@ final class WriteGuard {
         return $data;
     }
 
+    private static function is_root( int $page_id ): bool {
+        foreach ( GroupRepository::all() as $group ) {
+            if ( in_array( $page_id, $group['roots'], true ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static function error( string $field ): WP_Error {
+        if ( 'root_change' === $field ) {
+            return new WP_Error( 'jp_permissions_forbidden_root_change', __( 'Only administrators can change the address or status of a branch root page.', 'jp-permissions' ), array( 'status' => 403 ) );
+        }
         if ( 'parent' === $field ) {
             return new WP_Error( 'jp_permissions_forbidden_parent', __( 'You are not allowed to place a page here. Pages can only be created inside your page branches, and only administrators can move pages.', 'jp-permissions' ), array( 'status' => 403 ) );
         }
