@@ -19,8 +19,10 @@ final class Editor_Integration_Test extends WP_UnitTestCase {
         );
         foreach ( $cases as $case ) {
             list( $user, $post_type, $expected ) = $case;
+            wp_set_current_user( 0 );
+            $post = self::factory()->post->create_and_get( array( 'post_type' => $post_type ) );
             wp_set_current_user( $this->users[ $user ] );
-            $GLOBALS['post'] = self::factory()->post->create_and_get( array( 'post_type' => $post_type ) );
+            $GLOBALS['post'] = $post;
             do_action( 'enqueue_block_editor_assets' );
             $this->assertSame( $expected, in_array( 'jp-permissions-editor', wp_scripts()->queue, true ), $user . ' editing ' . $post_type );
             wp_dequeue_script( 'jp-permissions-editor' );

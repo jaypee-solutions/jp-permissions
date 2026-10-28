@@ -62,7 +62,7 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
                     wp_ajax_inline_save();
                     $this->fail( 'Expected Quick Edit structure update to be forbidden: ' . $field );
                 } catch ( WPDieException $exception ) {
-                    $this->assertStringContainsString( 'only administrators', strtolower( $exception->getMessage() ) );
+                    $this->assert_rejection_message( $exception->getMessage() );
                 } finally {
                     ob_end_clean();
                     $_POST = array();
