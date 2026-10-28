@@ -11,10 +11,7 @@ final class PageCreation {
     public static function init(): void {
         add_filter( 'map_meta_cap', array( self::class, 'map' ), 10, 4 );
         add_filter( 'page_row_actions', array( self::class, 'row_action' ), 10, 2 );
-        add_action( 'admin_post_jp_permissions_add_subpage', array( self::class, 'add_subpage' ) );
-        add_action( 'admin_init', array( self::class, 'redirect_generic_new_page' ) );
-        add_action( 'admin_notices', array( self::class, 'notice' ) );
-        add_action( 'admin_menu', array( self::class, 'remove_add_new_menu' ), 999 );
+        add_action( 'admin_init', array( self::class, 'remove_add_new_menu' ) );
         add_action( 'admin_bar_menu', array( self::class, 'remove_add_new_admin_bar' ), 999 );
     }
 
