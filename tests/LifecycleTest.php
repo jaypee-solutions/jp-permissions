@@ -7,6 +7,8 @@ namespace JayPee\Permissions\Tests;
 use JayPee\Permissions\Lifecycle;
 use PHPUnit\Framework\TestCase;
 
+use JayPee\Permissions\WPDieException;
+
 final class LifecycleTest extends TestCase {
     protected function setUp(): void {
         $GLOBALS['jp_permissions_test_multisite'] = false;
@@ -19,7 +21,7 @@ final class LifecycleTest extends TestCase {
         try {
             Lifecycle::activate();
             $this->fail( 'Activation should stop on multisite.' );
-        } catch ( \RuntimeException $error ) {
+        } catch ( WPDieException $error ) {
             $this->assertSame( 'JP Permissions does not support multisite.', $error->getMessage() );
         }
         $this->assertArrayNotHasKey( 'jp_branch_editor', $GLOBALS['jp_permissions_test_roles'] );

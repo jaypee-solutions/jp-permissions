@@ -11,6 +11,8 @@ declare( strict_types = 1 );
 
 namespace JayPee\Permissions;
 
+final class WPDieException extends \RuntimeException {}
+
 /**
  * @var array<string,mixed> Backing store for the get_option() stub.
  */
@@ -162,7 +164,7 @@ function register_uninstall_hook( string $file, $callback ): void {
 }
 
 function wp_die( string $message ): void {
-    throw new \RuntimeException( $message );
+    throw new WPDieException( $message );
 }
 
 function get_role( string $role ) {

@@ -63,8 +63,9 @@ final class Lifecycle_Integration_Test extends WP_UnitTestCase {
         deactivate_plugins( plugin_basename( \JayPee\Permissions\PLUGIN_FILE ) );
         $this->assertNotFalse( get_role( 'jp_branch_editor' ) );
         $this->assertSame( $option, get_option( 'jp_permissions_groups' ) );
+        delete_option( 'jp_permissions_groups' );
         remove_role( 'jp_branch_editor' );
-        \JayPee\Permissions\Lifecycle::maybe_upgrade();
+        do_action( 'plugins_loaded' );
         $this->assertNotFalse( get_role( 'jp_branch_editor' ) );
     }
 
