@@ -1,0 +1,28 @@
+{
+  "name": "jp-permissions",
+  "version": "0.1.0",
+  "description": "JP Permissions for WordPress is a WordPress plugin.",
+  "license": "GPL-2.0-or-later",
+  "author": "Jan-Peter Alten <support@jaypee.solutions>",
+  "private": true,
+  "scripts": {
+    "env:start": "scripts/wp-env-ensure.sh start",
+    "env:stop": "scripts/wp-env-ensure.sh stop",
+    "env:seed": "scripts/wp-env-ensure.sh seed",
+    "test:e2e:run": "scripts/run-e2e.sh",
+    "test:e2e:dev": "scripts/run-e2e.sh",
+    "test:e2e:dev:grep": "scripts/run-e2e.sh --grep",
+    "test:e2e": "npx --no-install playwright test",
+    "test:e2e:ui": "npx --no-install playwright test --ui",
+    "test:install": "npx --no-install playwright install --with-deps chromium",
+    "test:unit": "composer test",
+    "test:unit:coverage": "vendor/bin/phpunit --coverage-text",
+    "build:release": "scripts/build-release.sh",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@wordpress/env": "^10.10.0",
+    "husky": "^9.1.7"
+  }
+}

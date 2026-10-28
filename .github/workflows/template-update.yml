@@ -1,0 +1,79 @@
+# Applies new wp-plugin-template releases to this repo.
+#
+# The hosted Renovate app cannot run `copier update` (postUpgradeTasks are
+# self-hosted only), so a Renovate PR would bump .copier-answers.yml without
+# re-stamping the scaffolding. This workflow runs the real `copier update` and
+# opens a PR that goes through full CI (lint, tests, build + verify-scoped-bundle)
+# before it can merge.
+#
+# Requires a repo or org secret TEMPLATE_UPDATE_TOKEN: a token with
+# contents:write + pull-requests:write on this repo and contents:read on the
+# private wp-plugin-template repo. Using it (not GITHUB_TOKEN) is what lets the
+# opened PR trigger CI — so GITHUB_TOKEN itself stays read-only (below).
+name: Template update
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC
+  workflow_dispatch:
+
+# All writes use TEMPLATE_UPDATE_TOKEN, so GITHUB_TOKEN needs no write scope.
+permissions:
+  contents: read
+
+# Only one update run may write to chore/template-update at a time; a scheduled
+# and a manual run overlapping would otherwise race on the branch.
+concurrency:
+  group: template-update
+  cancel-in-progress: false
+
+jobs:
+  copier-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Always update from the default branch, even on manual dispatch from
+          # another ref, so the PR is never based on a stale branch's state.
+          ref: ${{ github.event.repository.default_branch }}
+          token: ${{ secrets.TEMPLATE_UPDATE_TOKEN }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install copier
+        # Pinned to a major range for deterministic updates; Copier majors can
+        # change update behaviour.
+        run: pipx install "copier>=9,<10"
+
+      # copier clones the private template over HTTPS; authenticate that clone.
+      - name: Authenticate template clone
+        run: |
+          git config --global \
+            url."https://x-access-token:${{ secrets.TEMPLATE_UPDATE_TOKEN }}@github.com/".insteadOf \
+            "https://github.com/"
+
+      - name: Configure git identity
+        run: |
+          git config user.name "template-update[bot]"
+          git config user.email "support@jaypee.solutions"
+
+      - name: copier update
+        run: copier update --defaults --trust --skip-tasks
+
+      - name: Open PR
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
+        with:
+          token: ${{ secrets.TEMPLATE_UPDATE_TOKEN }}
+          base: ${{ github.event.repository.default_branch }}
+          branch: chore/template-update
+          delete-branch: true
+          title: "chore: apply latest wp-plugin-template"
+          commit-message: "chore: copier update to latest wp-plugin-template"
+          body: |
+            Automated `copier update` to the latest wp-plugin-template release.
+
+            CI (lint, unit tests, build + verify-scoped-bundle) runs on this PR —
+            merge once green.
