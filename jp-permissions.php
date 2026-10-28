@@ -37,13 +37,11 @@ require_once __DIR__ . '/includes/class-branch-policy.php';
 require_once __DIR__ . '/includes/class-capabilities.php';
 require_once __DIR__ . '/includes/class-editor.php';
 require_once __DIR__ . '/includes/class-groups-page.php';
-GroupsPage::init();
 require_once __DIR__ . '/includes/class-lifecycle.php';
 require_once __DIR__ . '/includes/class-write-guard.php';
 require_once __DIR__ . '/includes/class-page-creation.php';
-require_once __DIR__ . '/includes/class-groups-page.php';
+require_once __DIR__ . '/includes/class-pages-list.php';
 require_once __DIR__ . '/includes/class-user-profile.php';
-require_once __DIR__ . '/includes/class-lifecycle.php';
 
 Updates::init();
 Lifecycle::init();
@@ -53,6 +51,7 @@ Editor::init();
 WriteGuard::init();
 PageCreation::init();
 GroupsPage::init();
+PagesList::init();
 UserProfile::init();
 
 /**
