@@ -6,21 +6,21 @@ final class Editor_Integration_Test extends WP_UnitTestCase {
     use Branch_Fixtures;
 
     public function test_editor_script_is_enqueued_only_for_restricted_users_editing_pages(): void {
-        $cases = array(
-            array( 'fb', 'page', true ),
-            array( 'multi', 'page', true ),
-            array( 'youth', 'page', true ),
-            array( 'admin', 'page', false ),
-            array( 'orphan', 'page', false ),
-            array( 'staff', 'page', false ),
-            array( 'fb_staff', 'page', false ),
-            array( 'sub', 'page', false ),
-            array( 'fb', 'post', false ),
-        );
+        $cases = [
+            [ 'fb', 'page', true ],
+            [ 'multi', 'page', true ],
+            [ 'youth', 'page', true ],
+            [ 'admin', 'page', false ],
+            [ 'orphan', 'page', false ],
+            [ 'staff', 'page', false ],
+            [ 'fb_staff', 'page', false ],
+            [ 'sub', 'page', false ],
+            [ 'fb', 'post', false ],
+        ];
         foreach ( $cases as $case ) {
             list( $user, $post_type, $expected ) = $case;
             wp_set_current_user( 0 );
-            $post = self::factory()->post->create_and_get( array( 'post_type' => $post_type ) );
+            $post = self::factory()->post->create_and_get( [ 'post_type' => $post_type ] );
             wp_set_current_user( $this->users[ $user ] );
             $GLOBALS['post'] = $post;
             do_action( 'enqueue_block_editor_assets' );

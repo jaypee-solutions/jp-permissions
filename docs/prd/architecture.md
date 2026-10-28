@@ -20,21 +20,22 @@ flowchart TD
   Plugin --> BranchPolicy
   Plugin --> Capabilities
   Plugin --> WriteGuard
-  Plugin --> Subpages
+  Plugin --> PageCreation
   Plugin --> GroupsPage
+  Plugin --> PagesList
   Plugin --> UserProfile
   Plugin --> Editor
   Lifecycle --> GroupRepository
   Capabilities --> BranchPolicy
   WriteGuard --> BranchPolicy
-  Subpages --> BranchPolicy
+  PageCreation --> BranchPolicy
   GroupsPage --> GroupRepository
   UserProfile --> GroupRepository
   Editor --> BranchPolicy
   WordPress[WordPress hooks] --> Capabilities
-  WordPress --> WriteGuard
-  WordPress --> Subpages
+  WordPress --> PageCreation
   WordPress --> GroupsPage
+  WordPress --> PagesList
   WordPress --> UserProfile
   WordPress --> Editor
   WordPress --> Lifecycle
@@ -46,15 +47,16 @@ All classes are `final` in namespace `JayPee\Permissions`, with static `init()` 
 
 | Class | API and responsibility |
 |---|---|
-| `GroupRepository` | `all(): array` normalized groups keyed by ID; `get(int $id): ?array`; `save(?int $id, string $name, int[] $roots, int[] $members): int|WP_Error` (validate FR-01/02; errors `jp_permissions_invalid_name`, `jp_permissions_duplicate_name`); `delete(int $id): void`; `remove_root(int $page_id): void`; `remove_member(int $user_id): void`; `groups_for_user(int $user_id): array`; constants `OPTION = 'jp_permissions_groups'`, `SCHEMA = 1`. One autoloaded option stores schema, next_id (IDs never reused), groups; malformed data normalizes fail-closed. |
+| `GroupRepository` | `all(): array` normalized groups keyed by ID; `get(int $id): ?array`; `save(?int $id, string $name, int[] $roots, int[] $members): int|WP_Error` (validate FR-01/02; errors `jp_permissions_invalid_name`, `jp_permissions_duplicate_name`, `jp_permissions_missing_group`); `delete(int $id): void`; `remove_root(int $page_id): void`; `remove_member(int $user_id): void`; `groups_for_user(int $user_id): array`; constants `OPTION = 'jp_permissions_groups'`, `SCHEMA = 1`. One autoloaded option stores schema, next_id (IDs never reused), groups; malformed data normalizes fail-closed. |
 | `BranchPolicy` | `is_restricted(int $user_id): bool` (user is a group member and role-derived capabilities lack `edit_others_pages`; ID 0 false); `roots_for(int $user_id): int[]` (memoized); `authorized_page_ids(int $user_id): int[]` (roots plus all descendants, memoized; used by the Pages list); `is_authorized_page(int $user_id, WP_Post $page): bool`; `is_restricted_context(): bool` (`is_restricted(get_current_user_id()) && ! wp_doing_cron()`); `reset(): void` clears memo, hooked to `update_option_jp_permissions_groups`, `add_option_jp_permissions_groups`, and usable by tests. |
-| `Capabilities` | Hooks `user_has_cap` (priority 10, 4 args): add `edit_pages`, `edit_others_pages`, `publish_pages` only for group members whose role-derived capabilities lack `edit_others_pages`. The restriction/admin test is role-derived `$user->allcaps['edit_others_pages']`; membership only grants access and never removes role-granted access. Hooks `map_meta_cap` (priority 10, 4 args) per table. Registers `jp_branch_editor` role (`read`, `upload_files`). |
+| `Capabilities` | Hooks `user_has_cap` (priority 10, 4 args): add `edit_pages`, `edit_others_pages`, `publish_pages` only for group members whose role-derived capabilities lack `edit_others_pages`. The restriction/admin test is role-derived `$user->allcaps['edit_others_pages']`; membership only grants access and never removes role-granted access. Hooks `map_meta_cap` (priority 10, 4 args) per table. |
 | `WriteGuard` | Hooks `rest_pre_insert_page` (10, 2), `wp_insert_post_data` (99, 4), and `pre_trash_post`/`pre_untrash_post`/`pre_delete_post` (10, 3). L2/L3 enforce parent, root slug/status, menu order, and trash restrictions on page writes. |
-| `Subpages` | Hooks `page_row_actions` (“Add subpage”), `admin_post_jp_permissions_add_subpage`, `load-post-new.php` redirect, `admin_notices` for `jp_permissions_notice`, `admin_menu` (remove Add New Page for restricted users), `admin_bar_menu` priority 999 (remove `new-page`), and `pre_get_posts` on the `edit.php` page list (restricted users: `post__in` = `BranchPolicy::authorized_page_ids()`, empty set yields no rows). |
+| `PageCreation` | Hooks `page_row_actions` (“Add subpage”), `admin_post_jp_permissions_add_subpage`, `load-post-new.php` redirect for generic page creation, `admin_notices` for `jp_permissions_notice`, `admin_init` (remove Add New Page for restricted users), and `admin_bar_menu` priority 999 (remove `new-page`). |
+| `PagesList` | Hooks `pre_get_posts` on the `edit.php` Pages list; restricts users to `BranchPolicy::authorized_page_ids()` and yields no rows when their authorized set is empty. |
 | `GroupsPage` | Users → “Page Branches”, slug `jp-permissions-branches`, `manage_options`, load hook `load-users_page_jp-permissions-branches`; manages group list/edit/delete using nonces `jp_permissions_save_group` and `jp_permissions_delete_group_{group_id}`. |
 | `UserProfile` | `show_user_profile`/`edit_user_profile`: read-only group/root list for administrators and the profile owner. |
 | `Editor` | `enqueue_block_editor_assets`; enqueue only for restricted user editing a page. Script `jp-permissions-editor`, `assets/js/editor.js`, dependencies `wp-data`, `wp-dom-ready`, `wp-editor`. |
-| `Lifecycle` | Activation (refused with a translated message when `is_multisite()`), upgrade, and uninstall, plus `deleted_post`/`deleted_user` cleanup hooks delegating to repository. |
+| `Lifecycle` | Activation (refused with a translated message when `is_multisite()`), upgrade, and uninstall, plus `deleted_post`/`deleted_user` cleanup hooks delegating to repository; registers the Branch Editor role. |
 
 ## Meta-capability mapping
 
@@ -155,17 +157,19 @@ flowchart LR
   Uninstall --> Cleanup[Delete option, demote role users, remove role]
 ```
 
-Upgrade uses `Lifecycle::maybe_upgrade()` on `plugins_loaded`, compares schema with `GroupRepository::SCHEMA = 1`, and re-adds missing role. Uninstall uses `register_uninstall_hook(PLUGIN_FILE, [Lifecycle::class, 'uninstall'])`; root `uninstall.php` is not shipped by release script (`scripts/build-release.sh:43-47`). Deactivation retains role and option.
+On `plugins_loaded`, `Lifecycle::maybe_upgrade()` re-registers the Branch Editor role even when no configuration option exists, then compares the stored schema with `GroupRepository::SCHEMA` for schema-specific work. Activation registers the uninstall callback and creates the role; uninstall removes the option, demotes Branch Editor members, and removes the role. The root `uninstall.php` is not shipped by the release script (`scripts/build-release.sh:43-47`). Deactivation retains the role and option.
 
 ## File layout
 
 ```text
-jp-permissions.php                 # bootstrap and uninstall hook registration
+jp-permissions.php                 # bootstrap
+includes/class-updates.php
 includes/class-group-repository.php
 includes/class-branch-policy.php
 includes/class-capabilities.php
 includes/class-write-guard.php
-includes/class-subpages.php
+includes/class-page-creation.php
+includes/class-pages-list.php
 includes/class-groups-page.php
 includes/class-user-profile.php
 includes/class-editor.php

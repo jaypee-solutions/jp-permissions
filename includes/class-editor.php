@@ -5,9 +5,11 @@ declare( strict_types = 1 );
 
 namespace JayPee\Permissions;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Editor {
     public static function init(): void {
-        add_action( 'enqueue_block_editor_assets', array( self::class, 'enqueue' ) );
+        add_action( 'enqueue_block_editor_assets', [ self::class, 'enqueue' ] );
     }
 
     public static function enqueue(): void {
@@ -18,7 +20,7 @@ final class Editor {
         wp_enqueue_script(
             'jp-permissions-editor',
             plugins_url( 'assets/js/editor.js', PLUGIN_FILE ),
-            array( 'wp-data', 'wp-dom-ready', 'wp-editor' ),
+            [ 'wp-data', 'wp-dom-ready', 'wp-editor' ],
             VERSION,
             true
         );

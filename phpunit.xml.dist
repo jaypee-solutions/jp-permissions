@@ -9,4 +9,9 @@
             <exclude>tests/integration</exclude>
         </testsuite>
     </testsuites>
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">includes</directory>
+        </include>
+    </coverage>
 </phpunit>

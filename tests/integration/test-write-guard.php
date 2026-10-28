@@ -7,7 +7,7 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
 
     public function test_restricted_rest_updates_reject_parent_and_order_changes(): void {
         wp_set_current_user( $this->users['fb'] );
-        foreach ( array( 'parent' => $this->pages['tennis'], 'menu_order' => 7 ) as $field => $value ) {
+        foreach ( [ 'parent' => $this->pages['tennis'], 'menu_order' => 7 ] as $field => $value ) {
             $request = new WP_REST_Request( 'POST', '/wp/v2/pages/' . $this->pages['football_training'] );
             $request->set_param( $field, $value );
             $response = rest_get_server()->dispatch( $request );
@@ -21,7 +21,7 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
 
     public function test_restricted_rest_omitted_and_unchanged_values_and_auto_draft_pass(): void {
         wp_set_current_user( $this->users['fb'] );
-        foreach ( array( array(), array( 'parent' => $this->pages['football'], 'menu_order' => 0 ) ) as $params ) {
+        foreach ( [ [], [ 'parent' => $this->pages['football'], 'menu_order' => 0 ] ] as $params ) {
             $request = new WP_REST_Request( 'POST', '/wp/v2/pages/' . $this->pages['football_training'] );
             $request->set_param( 'title', 'Still editable' );
             foreach ( $params as $key => $value ) {
@@ -29,17 +29,17 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
             }
             $this->assertSame( 200, rest_get_server()->dispatch( $request )->get_status() );
         }
-        $auto_draft = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'auto-draft', 'post_parent' => $this->pages['football'] ) );
+        $auto_draft = self::factory()->post->create( [ 'post_type' => 'page', 'post_status' => 'auto-draft', 'post_parent' => $this->pages['football'] ] );
         $this->pages['auto_draft'] = $auto_draft;
-        $this->assertNotWPError( wp_update_post( array( 'ID' => $auto_draft, 'post_title' => 'Autosaved draft' ), true ) );
+        $this->assertNotWPError( wp_update_post( [ 'ID' => $auto_draft, 'post_title' => 'Autosaved draft' ], true ) );
         $this->assertSame( $this->pages['football'], (int) get_post_field( 'post_parent', $auto_draft ) );
     }
 
     public function test_classic_quick_edit_and_bulk_edit_handlers_reject_structure_changes(): void {
         require_once ABSPATH . 'wp-admin/includes/ajax-actions.php';
-        foreach ( array( 'post_parent' => $this->pages['tennis'], 'menu_order' => 9 ) as $field => $value ) {
+        foreach ( [ 'post_parent' => $this->pages['tennis'], 'menu_order' => 9 ] as $field => $value ) {
             try {
-                edit_post( array( 'post_ID' => $this->pages['football_training'], $field => $value ) );
+                edit_post( [ 'post_ID' => $this->pages['football_training'], $field => $value ] );
                 $this->fail( 'Expected restricted edit_post update to be forbidden: ' . $field );
             } catch ( WPDieException $exception ) {
                 $this->assert_rejection_message( $exception->getMessage() );
@@ -53,9 +53,9 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
         add_filter( 'wp_die_ajax_handler', $get_die_handler );
         add_filter( 'wp_doing_ajax', '__return_true' );
         try {
-            foreach ( array( 'post_parent' => $this->pages['tennis'], 'menu_order' => 12 ) as $field => $value ) {
+            foreach ( [ 'post_parent' => $this->pages['tennis'], 'menu_order' => 12 ] as $field => $value ) {
                 $nonce = wp_create_nonce( 'inlineeditnonce' );
-                $_POST = array( 'post_ID' => $this->pages['football_training'], 'post_type' => 'page', '_inline_edit' => $nonce, 'screen' => 'edit-page', 'post_view' => 'list', $field => $value );
+                $_POST = [ 'post_ID' => $this->pages['football_training'], 'post_type' => 'page', '_inline_edit' => $nonce, 'screen' => 'edit-page', 'post_view' => 'list', $field => $value ];
                 $_REQUEST = $_POST;
                 ob_start();
                 try {
@@ -65,12 +65,12 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
                     $this->assert_rejection_message( $exception->getMessage() );
                 } finally {
                     ob_end_clean();
-                    $_POST = array();
-                    $_REQUEST = array();
+                    $_POST = [];
+                    $_REQUEST = [];
                 }
             }
             try {
-                bulk_edit_posts( array( 'post_type' => 'page', '_status' => '-1', 'post' => array( $this->pages['football_training'] ), 'post_parent' => $this->pages['tennis'] ) );
+                bulk_edit_posts( [ 'post_type' => 'page', '_status' => '-1', 'post' => [ $this->pages['football_training'] ], 'post_parent' => $this->pages['tennis'] ] );
                 $this->fail( 'Expected bulk edit move to be forbidden.' );
             } catch ( WPDieException $exception ) {
                 $this->assert_rejection_message( $exception->getMessage() );
@@ -79,15 +79,15 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
             remove_filter( 'wp_die_handler', $get_die_handler );
             remove_filter( 'wp_die_ajax_handler', $get_die_handler );
             remove_filter( 'wp_doing_ajax', '__return_true' );
-            $_POST = array();
-            $_REQUEST = array();
+            $_POST = [];
+            $_REQUEST = [];
         }
         $this->assertSame( $this->pages['football'], (int) get_post_field( 'post_parent', $this->pages['football_training'] ) );
         $this->assertSame( 0, (int) get_post_field( 'menu_order', $this->pages['football_training'] ) );
     }
 
     public function test_unrestricted_users_can_reorder_pages(): void {
-        foreach ( array( 'staff', 'fb_staff', 'admin' ) as $user ) {
+        foreach ( [ 'staff', 'fb_staff', 'admin' ] as $user ) {
             wp_set_current_user( $this->users[ $user ] );
             $request = new WP_REST_Request( 'POST', '/wp/v2/pages/' . $this->pages['football_training'] );
             $request->set_param( 'menu_order', 3 );

@@ -17,6 +17,7 @@
     "test:install": "npx --no-install playwright install --with-deps chromium",
     "test:integration": "WP_ENV_HOME=./.wp-env npx wp-env run tests-cli --env-cwd=wp-content/plugins/jp-permissions vendor/bin/phpunit -c phpunit-integration.xml.dist",
     "test:unit": "composer test",
+    "test:unit:coverage": "vendor/bin/phpunit --coverage-text",
     "build:release": "scripts/build-release.sh",
     "prepare": "husky"
   },

@@ -7,14 +7,16 @@ namespace JayPee\Permissions;
 
 use WP_Post;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Capabilities {
     public static function init(): void {
-        add_filter( 'user_has_cap', array( self::class, 'grant' ), 10, 4 );
-        add_filter( 'map_meta_cap', array( self::class, 'map' ), 10, 4 );
+        add_filter( 'user_has_cap', [ self::class, 'grant_page_capabilities' ], 10, 4 );
+        add_filter( 'map_meta_cap', [ self::class, 'map_page_meta_capability' ], 10, 4 );
     }
 
 
-    public static function grant( array $allcaps, array $caps, array $args, \WP_User $user ): array {
+    public static function grant_page_capabilities( array $allcaps, array $caps, array $args, \WP_User $user ): array {
         if ( ! empty( $allcaps['edit_others_pages'] ) || empty( GroupRepository::groups_for_user( (int) $user->ID ) ) ) {
             return $allcaps;
         }
@@ -24,11 +26,11 @@ final class Capabilities {
         return $allcaps;
     }
 
-    public static function map( array $caps, string $cap, int $user_id, array $args ): array {
+    public static function map_page_meta_capability( array $caps, string $cap, int $user_id, array $args ): array {
         if ( ! BranchPolicy::is_restricted( $user_id ) ) {
             return $caps;
         }
-        if ( ! in_array( $cap, array( 'edit_post', 'edit_page', 'publish_post', 'read_post', 'read_page', 'delete_post', 'delete_page' ), true ) || empty( $args[0] ) ) {
+        if ( ! in_array( $cap, [ 'edit_post', 'edit_page', 'publish_post', 'read_post', 'read_page', 'delete_post', 'delete_page' ], true ) || empty( $args[0] ) ) {
             return $caps;
         }
         $post = get_post( (int) $args[0] );
@@ -39,21 +41,21 @@ final class Capabilities {
             return $caps;
         }
         if ( str_starts_with( $cap, 'delete_' ) ) {
-            return array( 'do_not_allow' );
+            return [ 'do_not_allow' ];
         }
         if ( 'attachment' === $post->post_type ) {
-            return ( 'edit_post' === $cap && (int) $post->post_author === $user_id ) ? array( 'upload_files' ) : $caps;
+            return ( 'edit_post' === $cap && (int) $post->post_author === $user_id ) ? [ 'upload_files' ] : $caps;
         }
         $allowed = BranchPolicy::is_authorized_page( $user_id, $post );
-        if ( in_array( $cap, array( 'edit_post', 'edit_page' ), true ) ) {
+        if ( in_array( $cap, [ 'edit_post', 'edit_page' ], true ) ) {
             if ( ! $allowed ) {
-                return array( 'do_not_allow' );
+                return [ 'do_not_allow' ];
             }
-            return in_array( 'manage_privacy_options', $caps, true ) ? array( 'edit_pages', 'manage_privacy_options' ) : array( 'edit_pages' );
+            return in_array( 'manage_privacy_options', $caps, true ) ? [ 'edit_pages', 'manage_privacy_options' ] : [ 'edit_pages' ];
         }
         if ( 'publish_post' === $cap ) {
-            return $allowed ? array( 'publish_pages' ) : array( 'do_not_allow' );
+            return $allowed ? [ 'publish_pages' ] : [ 'do_not_allow' ];
         }
-        return $allowed ? array( 'read' ) : $caps;
+        return $allowed ? [ 'read' ] : $caps;
     }
 }

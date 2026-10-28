@@ -7,8 +7,8 @@ final class Root_Lock_Integration_Test extends WP_UnitTestCase {
 
     public function test_restricted_rest_locks_root_slug_and_status_but_not_content_or_descendant_status(): void {
         wp_set_current_user( $this->users['fb'] );
-        foreach ( array( 'football', 'youth' ) as $root ) {
-            foreach ( array( 'slug' => 'changed-' . $root, 'status' => 'draft' ) as $field => $value ) {
+        foreach ( [ 'football', 'youth' ] as $root ) {
+            foreach ( [ 'slug' => 'changed-' . $root, 'status' => 'draft' ] as $field => $value ) {
                 $request = new WP_REST_Request( 'POST', '/wp/v2/pages/' . $this->pages[ $root ] );
                 $request->set_param( $field, $value );
                 $response = rest_get_server()->dispatch( $request );
@@ -47,10 +47,10 @@ final class Root_Lock_Integration_Test extends WP_UnitTestCase {
         add_filter( 'wp_die_ajax_handler', $get_die_handler );
         add_filter( 'wp_doing_ajax', '__return_true' );
         try {
-            foreach ( array( 'football', 'youth' ) as $root ) {
-                foreach ( array( 'post_name' => 'changed-' . $root, 'post_status' => 'draft' ) as $field => $value ) {
+            foreach ( [ 'football', 'youth' ] as $root ) {
+                foreach ( [ 'post_name' => 'changed-' . $root, 'post_status' => 'draft' ] as $field => $value ) {
                     $nonce = wp_create_nonce( 'inlineeditnonce' );
-                    $_POST = array( 'post_ID' => $this->pages[ $root ], 'post_type' => 'page', '_inline_edit' => $nonce, 'screen' => 'edit-page', 'post_view' => 'list', $field => $value );
+                    $_POST = [ 'post_ID' => $this->pages[ $root ], 'post_type' => 'page', '_inline_edit' => $nonce, 'screen' => 'edit-page', 'post_view' => 'list', $field => $value ];
                     $_REQUEST = $_POST;
                     ob_start();
                     try {
@@ -60,8 +60,8 @@ final class Root_Lock_Integration_Test extends WP_UnitTestCase {
                         $this->assertStringContainsString( 'only administrators can change the address or status', strtolower( $exception->getMessage() ) );
                     } finally {
                         ob_end_clean();
-                        $_POST = array();
-                        $_REQUEST = array();
+                        $_POST = [];
+                        $_REQUEST = [];
                     }
                 }
             }

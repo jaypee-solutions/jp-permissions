@@ -8,10 +8,10 @@ async function loginAs( page: Page, username: string, password = 'password' ): P
 	await page.goto( '/wp-login.php' );
 	const userField = page.locator( '#user_login' );
 	const passwordField = page.locator( '#user_pass' );
-	await passwordField.fill( password );
-	await expect( passwordField ).toHaveValue( password );
 	await userField.fill( username );
 	await expect( userField ).toHaveValue( username );
+	await passwordField.fill( password );
+	await expect( passwordField ).toHaveValue( password );
 	await page.click( '#wp-submit' );
 	await expect( page ).toHaveURL( /wp-admin/ );
 }
@@ -19,7 +19,7 @@ async function loginAs( page: Page, username: string, password = 'password' ): P
 async function closePatternDialog( page: Page ): Promise<void> {
 	const dialog = page.getByRole( 'dialog', { name: 'Choose a pattern' } );
 	try {
-		await dialog.waitFor( { state: 'visible', timeout: 2000 } );
+		await dialog.waitFor( { state: 'visible', timeout: 10_000 } );
 	} catch {
 		return;
 	}
@@ -42,8 +42,12 @@ test.describe( 'Page Branches browser flows', () => {
 		const title = page.frameLocator( 'iframe' ).locator( '.wp-block-post-title' );
 		await expect( title ).toBeVisible();
 		await title.fill( 'E2E Football Page' );
-		await page.getByRole( 'button', { name: 'Publish', exact: true } ).first().click();
-		await page.getByRole( 'button', { name: 'Publish', exact: true } ).last().click();
+		const publishButton = page.getByRole( 'button', { name: 'Publish', exact: true } );
+		await expect( publishButton.first() ).toBeEnabled();
+		await publishButton.first().click();
+		const confirmPublishButton = publishButton.last();
+		await expect( confirmPublishButton ).toBeEnabled();
+		await confirmPublishButton.click();
 		await expect( page.getByText( 'Published', { exact: true } ) ).toBeVisible();
 		await page.goto( '/wp-admin/edit.php?post_type=page' );
 		const createdPage = page.getByRole( 'row', { name: /Select E2E Football Page/ } );

@@ -8,17 +8,19 @@ namespace JayPee\Permissions;
 use WP_Error;
 use WP_Post;
 
+defined( 'ABSPATH' ) || exit;
+
 final class WriteGuard {
     public static function init(): void {
-        add_filter( 'rest_pre_insert_page', array( self::class, 'rest_pre_insert' ), 10, 2 );
-        add_filter( 'wp_insert_post_data', array( self::class, 'insert_post_data' ), 99, 4 );
-        add_filter( 'pre_trash_post', array( self::class, 'prevent_page_deletion' ), 10, 3 );
-        add_filter( 'pre_untrash_post', array( self::class, 'prevent_page_deletion' ), 10, 3 );
-        add_filter( 'pre_delete_post', array( self::class, 'prevent_page_deletion' ), 10, 3 );
+        add_filter( 'rest_pre_insert_page', [ self::class, 'rest_pre_insert' ], 10, 2 );
+        add_filter( 'wp_insert_post_data', [ self::class, 'insert_post_data' ], 99, 4 );
+        add_filter( 'pre_trash_post', [ self::class, 'prevent_page_deletion' ], 10, 3 );
+        add_filter( 'pre_untrash_post', [ self::class, 'prevent_page_deletion' ], 10, 3 );
+        add_filter( 'pre_delete_post', [ self::class, 'prevent_page_deletion' ], 10, 3 );
     }
 
     /**
-     * Deny lifecycle deletion for restricted page editors, except abandoned drafts.
+     * Deny lifecycle deletion for restricted users, except abandoned drafts.
      *
      * @param WP_Post $post      Post being changed.
      * @return mixed
@@ -39,11 +41,12 @@ final class WriteGuard {
         }
         if ( empty( $prepared->ID ) ) {
             $parent = isset( $prepared->post_parent ) ? get_post( (int) $prepared->post_parent ) : null;
-            if ( ! $parent instanceof WP_Post || 'page' !== $parent->post_type || in_array( $parent->post_status, array( 'auto-draft', 'trash' ), true ) || ! BranchPolicy::is_authorized_page( get_current_user_id(), $parent ) ) {
-                return self::error( 'parent' );
+            // phpcs:ignore WordPress.WP.Capabilities.Unknown -- Mapped by PageCreation::map.
+            if ( ! $parent instanceof WP_Post || ! user_can( get_current_user_id(), 'jp_permissions_add_subpage', $parent->ID ) ) {
+                return self::error_for_violation( 'parent' );
             }
             if ( isset( $prepared->menu_order ) && 0 !== (int) $prepared->menu_order ) {
-                return self::error( 'order' );
+                return self::error_for_violation( 'order' );
             }
             return $prepared;
         }
@@ -51,17 +54,17 @@ final class WriteGuard {
         if ( $stored instanceof WP_Post ) {
             if ( self::is_root( $stored->ID ) ) {
                 if ( $request->has_param( 'slug' ) && $prepared->post_name !== $stored->post_name ) {
-                    return self::error( 'root_change' );
+                    return self::error_for_violation( 'root_change' );
                 }
                 if ( $request->has_param( 'status' ) && $prepared->post_status !== $stored->post_status ) {
-                    return self::error( 'root_change' );
+                    return self::error_for_violation( 'root_change' );
                 }
             }
             if ( $request->has_param( 'parent' ) && (int) $prepared->post_parent !== (int) $stored->post_parent ) {
-                return self::error( 'parent' );
+                return self::error_for_violation( 'parent' );
             }
             if ( $request->has_param( 'menu_order' ) && (int) $prepared->menu_order !== (int) $stored->menu_order ) {
-                return self::error( 'order' );
+                return self::error_for_violation( 'order' );
             }
         }
         return $prepared;
@@ -73,7 +76,8 @@ final class WriteGuard {
         }
         if ( ! $update ) {
             $parent = get_post( (int) ( $data['post_parent'] ?? 0 ) );
-            if ( ! $parent instanceof WP_Post || 'page' !== $parent->post_type || in_array( $parent->post_status, array( 'auto-draft', 'trash' ), true ) || ! BranchPolicy::is_authorized_page( get_current_user_id(), $parent ) ) {
+            // phpcs:ignore WordPress.WP.Capabilities.Unknown -- Mapped by PageCreation::map.
+            if ( ! $parent instanceof WP_Post || ! user_can( get_current_user_id(), 'jp_permissions_add_subpage', $parent->ID ) ) {
                 self::deny( 'parent' );
             }
             if ( (int) ( $data['menu_order'] ?? 0 ) !== 0 ) {
@@ -120,21 +124,21 @@ final class WriteGuard {
         return false;
     }
 
-    private static function error( string $field ): WP_Error {
-        if ( 'root_change' === $field ) {
-            return new WP_Error( 'jp_permissions_forbidden_root_change', __( 'Only administrators can change the address or status of a branch root page.', 'jp-permissions' ), array( 'status' => 403 ) );
+    private static function error_for_violation( string $violation ): WP_Error {
+        $errors = [
+            'root_change' => [ 'jp_permissions_forbidden_root_change', __( 'Only administrators can change the address or status of a branch root page.', 'jp-permissions' ) ],
+            'parent' => [ 'jp_permissions_forbidden_parent', __( 'You are not allowed to place a page here. Pages can only be created inside your page branches, and only administrators can move pages.', 'jp-permissions' ) ],
+            'order' => [ 'jp_permissions_forbidden_order', __( 'Only administrators can change the order of pages.', 'jp-permissions' ) ],
+            'delete' => [ 'jp_permissions_forbidden_delete', __( 'Only administrators can trash, restore, or delete pages.', 'jp-permissions' ) ],
+        ];
+        if ( ! isset( $errors[ $violation ] ) ) {
+            throw new \LogicException( 'Unknown page write violation.' );
         }
-        if ( 'parent' === $field ) {
-            return new WP_Error( 'jp_permissions_forbidden_parent', __( 'You are not allowed to place a page here. Pages can only be created inside your page branches, and only administrators can move pages.', 'jp-permissions' ), array( 'status' => 403 ) );
-        }
-        if ( 'order' === $field ) {
-            return new WP_Error( 'jp_permissions_forbidden_order', __( 'Only administrators can change the order of pages.', 'jp-permissions' ), array( 'status' => 403 ) );
-        }
-        return new WP_Error( 'jp_permissions_forbidden_delete', __( 'Only administrators can trash, restore, or delete pages.', 'jp-permissions' ), array( 'status' => 403 ) );
+        return new WP_Error( $errors[ $violation ][0], $errors[ $violation ][1], [ 'status' => 403 ] );
     }
 
-    private static function deny( string $field ): void {
-        $error = self::error( $field );
-        wp_die( esc_html( $error->get_error_message() ), esc_html__( 'Forbidden', 'jp-permissions' ), array( 'response' => 403, 'back_link' => true ) );
+    private static function deny( string $violation ): void {
+        $error = self::error_for_violation( $violation );
+        wp_die( esc_html( $error->get_error_message() ), esc_html__( 'Forbidden', 'jp-permissions' ), [ 'response' => 403, 'back_link' => true ] );
     }
 }

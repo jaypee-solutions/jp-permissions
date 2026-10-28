@@ -7,9 +7,11 @@ namespace JayPee\Permissions;
 
 use WP_Query;
 
+defined( 'ABSPATH' ) || exit;
+
 final class PagesList {
     public static function init(): void {
-        add_action( 'pre_get_posts', array( self::class, 'restrict_query' ) );
+        add_action( 'pre_get_posts', [ self::class, 'restrict_query' ] );
     }
 
     public static function restrict_query( WP_Query $query ): void {
@@ -23,6 +25,6 @@ final class PagesList {
         }
 
         $page_ids = BranchPolicy::authorized_page_ids( $user_id );
-        $query->set( 'post__in', empty( $page_ids ) ? array( 0 ) : $page_ids );
+        $query->set( 'post__in', empty( $page_ids ) ? [ 0 ] : $page_ids );
     }
 }

@@ -11,7 +11,8 @@ extracts it as the GitHub release notes and fails without it.
 ## [Unreleased]
 
 ### Added
-- Page Branches user documentation for Administrators and Branch Editors, plus minimum WordPress 7.1 and PHP 8.0 requirements.
+- Added Page Branches: administrators can assign Branch Editor members to page-tree roots, granting scoped editing and publishing access to those branches while protecting site structure.
+- Added user documentation for Administrators and Branch Editors, plus minimum WordPress 7.1 and PHP 8.0 requirements.
 
 ### Fixed
 - Fixed Branch Editors being denied the Pages screen when its Add New submenu is hidden.
