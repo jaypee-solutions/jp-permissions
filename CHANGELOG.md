@@ -13,6 +13,9 @@ extracts it as the GitHub release notes and fails without it.
 ### Added
 - Page Branches user documentation for Administrators and Branch Editors, plus minimum WordPress 7.1 and PHP 8.0 requirements.
 
+### Fixed
+- Fixed Branch Editors being denied the Pages screen when its Add New submenu is hidden.
+
 ## [0.1.0] - 2026-10-27
 
 ### Added
