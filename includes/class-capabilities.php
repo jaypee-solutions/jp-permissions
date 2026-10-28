@@ -42,7 +42,7 @@ final class Capabilities {
             return array( 'do_not_allow' );
         }
         if ( 'attachment' === $post->post_type ) {
-            return $caps;
+            return ( 'edit_post' === $cap && (int) $post->post_author === $user_id ) ? array( 'upload_files' ) : $caps;
         }
         $allowed = BranchPolicy::is_authorized_page( $user_id, $post );
         if ( in_array( $cap, array( 'edit_post', 'edit_page' ), true ) ) {
