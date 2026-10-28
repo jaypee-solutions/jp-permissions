@@ -21,3 +21,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require __DIR__ . '/stubs.php';
 require dirname( __DIR__ ) . '/includes/class-updates.php';
+require dirname( __DIR__ ) . '/includes/class-group-repository.php';
+require dirname( __DIR__ ) . '/includes/class-capabilities.php';
+require dirname( __DIR__ ) . '/includes/class-lifecycle.php';
