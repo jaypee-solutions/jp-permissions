@@ -12,6 +12,13 @@ async function loginAs( page: Page, username: string, password = 'password' ): P
 	await expect( page ).toHaveURL( /wp-admin/ );
 }
 
+async function closePatternDialog( page: Page ): Promise<void> {
+	const close = page.getByRole( 'button', { name: 'Close' } );
+	if ( await close.isVisible().catch( () => false ) ) {
+		await close.click();
+	}
+}
+
 async function addSubpageFromTraining( page: Page ): Promise<void> {
 	await page.goto( '/wp-admin/edit.php?post_type=page' );
 	const row = page.locator( 'tr' ).filter( { hasText: 'Training' } ).filter( { has: page.locator( 'a.add_subpage' ) } ).first();
@@ -22,6 +29,7 @@ test.describe( 'Page Branches browser flows', () => {
 	test( 'E2E-1: Branch Editor creates and publishes a subpage under Training', async ( { page } ) => {
 		await loginAs( page, FB_USER );
 		await addSubpageFromTraining( page );
+		await closePatternDialog( page );
 		await expect( page.locator( '.editor-post-title__input' ) ).toBeVisible();
 		await page.locator( '.editor-post-title__input' ).fill( 'E2E Football Page' );
 		await page.getByRole( 'button', { name: 'Publish', exact: true } ).first().click();
@@ -34,7 +42,7 @@ test.describe( 'Page Branches browser flows', () => {
 	test( 'E2E-2: Branch Editor cannot edit Tennis', async ( { page } ) => {
 		await loginAs( page, ADMIN_USER, ADMIN_PASS );
 		await page.goto( '/wp-admin/edit.php?post_type=page' );
-		const editUrl = await page.locator( 'tr' ).filter( { hasText: 'Tennis' } ).getByRole( 'link', { name: 'Edit' } ).getAttribute( 'href' );
+		const editUrl = await page.getByRole( 'link', { name: 'Edit “Tennis”' } ).getAttribute( 'href' );
 		await loginAs( page, FB_USER );
 		await page.goto( editUrl! );
 		await expect( page.getByText( 'Sorry, you are not allowed to edit this item.' ) ).toBeVisible();
@@ -43,18 +51,21 @@ test.describe( 'Page Branches browser flows', () => {
 	test( 'E2E-3: Page Attributes is hidden for Branch Editors and visible to administrators', async ( { page } ) => {
 		await loginAs( page, ADMIN_USER, ADMIN_PASS );
 		await page.goto( '/wp-admin/edit.php?post_type=page' );
-		const editUrl = await page.locator( 'tr' ).filter( { hasText: 'Training' } ).getByRole( 'link', { name: 'Edit' } ).first().getAttribute( 'href' );
+		const editUrl = await page.getByRole( 'link', { name: 'Edit “Training”' } ).first().getAttribute( 'href' );
 		await loginAs( page, FB_USER );
 		await page.goto( editUrl! );
+		await closePatternDialog( page );
 		await expect( page.getByRole( 'button', { name: 'Page Attributes' } ) ).toHaveCount( 0 );
 		await loginAs( page, ADMIN_USER, ADMIN_PASS );
 		await page.goto( editUrl! );
+		await closePatternDialog( page );
 		await expect( page.getByRole( 'button', { name: 'Page Attributes' } ) ).toBeVisible();
 	} );
 
 	test( 'Branch Editor uploads an image with resized versions', async ( { page } ) => {
 		await loginAs( page, FB_USER );
 		await addSubpageFromTraining( page );
+		await closePatternDialog( page );
 		await page.locator( '.editor-post-title__input' ).fill( 'E2E Image Upload' );
 		await page.getByRole( 'button', { name: 'Add block' } ).click();
 		await page.getByRole( 'option', { name: /Image/ } ).click();

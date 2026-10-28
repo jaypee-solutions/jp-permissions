@@ -23,7 +23,7 @@ $wp_rewrite->flush_rules();
 require_once ABSPATH . 'wp-admin/includes/misc.php';
 save_mod_rewrite_rules();
 
-// Add the plugin's own fixtures below. Keep this idempotent: the runner seeds
+// Keep this fixture seed idempotent: the runner invokes it before every E2E run.
 function jp_e2e_page( string $slug, string $title, int $parent_id = 0 ): int {
     $existing = get_page_by_path( $slug, OBJECT, 'page' );
     $page = array(
@@ -88,6 +88,5 @@ update_option( 'jp_permissions_groups', array(
     ),
 ) );
 
-// before every E2E run, against a database that may already hold the fixtures.
 
 WP_CLI::success( 'Seed complete.' );
