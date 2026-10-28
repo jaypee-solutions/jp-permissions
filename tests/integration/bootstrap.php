@@ -12,3 +12,25 @@ require getenv( 'WP_TESTS_DIR' ) . '/includes/bootstrap.php';
 require_once dirname( __DIR__, 2 ) . '/jp-permissions.php';
 require_once __DIR__ . '/class-branch-fixtures.php';
 \JayPee\Permissions\Lifecycle::activate();
+
+/**
+ * A handler reaching exit()/die() (AJAX, redirects) ends PHPUnit with status 0
+ * and silently skips the remaining tests; fail the run unless PHPUnit finished.
+ */
+final class Integration_Run_Completion implements \PHPUnit\Runner\AfterLastTestHook {
+
+    public static bool $completed = false;
+
+    public function executeAfterLastTest(): void {
+        self::$completed = true;
+    }
+}
+
+register_shutdown_function(
+    static function (): void {
+        if ( ! Integration_Run_Completion::$completed ) {
+            fwrite( STDERR, PHP_EOL . 'Integration run aborted before PHPUnit finished: a test or handler reached exit()/die().' . PHP_EOL );
+            exit( 1 );
+        }
+    }
+);
