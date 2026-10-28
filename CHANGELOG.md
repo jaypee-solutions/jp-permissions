@@ -10,6 +10,9 @@ extracts it as the GitHub release notes and fails without it.
 
 ## [Unreleased]
 
+### Added
+- Page Branches user documentation for Administrators and Branch Editors, plus minimum WordPress 7.1 and PHP 8.0 requirements.
+
 ## [0.1.0] - 2026-10-27
 
 ### Added
