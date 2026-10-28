@@ -69,7 +69,23 @@ final class BranchPolicy {
     }
 
     public static function is_authorized_page( int $user_id, WP_Post $page ): bool {
-        return 'page' === $page->post_type && in_array( $page->ID, self::authorized_page_ids( $user_id ), true );
+        if ( 'page' !== $page->post_type ) {
+            return false;
+        }
+        $roots = self::roots_for( $user_id );
+        $cursor = $page;
+        $visited = array();
+        $found_root = false;
+        while ( $cursor instanceof WP_Post ) {
+            if ( isset( $visited[ $cursor->ID ] ) ) {
+                return false;
+            }
+            $visited[ $cursor->ID ] = true;
+            $found_root = $found_root || in_array( $cursor->ID, $roots, true );
+            $parent_id = (int) $cursor->post_parent;
+            $cursor = $parent_id > 0 ? get_post( $parent_id ) : null;
+        }
+        return $found_root;
     }
 
     public static function is_restricted_context(): bool {

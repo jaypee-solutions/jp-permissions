@@ -28,14 +28,19 @@ final class Authorization_Integration_Test extends WP_UnitTestCase {
         wp_set_current_user( $this->users['multi'] );
         $this->assertTrue( current_user_can( 'edit_post', $this->pages['tennis'] ) );
         $this->assertTrue( current_user_can( 'edit_post', $this->pages['courses'] ) );
+        $this->assertFalse( current_user_can( 'edit_post', $this->pages['football'] ) );
         $this->assertFalse( current_user_can( 'edit_post', $this->pages['home'] ) );
         wp_set_current_user( $this->users['fb_staff'] );
         $this->assertTrue( current_user_can( 'edit_post', $this->pages['tennis'] ) );
+        $this->assertTrue( current_user_can( 'edit_post', $this->pages['football'] ) );
         $this->assertTrue( current_user_can( 'edit_post', $this->pages['home'] ) );
         wp_set_current_user( $this->users['orphan'] );
         $this->assertFalse( current_user_can( 'edit_post', $this->pages['football'] ) );
         wp_set_current_user( $this->users['admin'] );
         $this->assertTrue( current_user_can( 'edit_post', $this->pages['home'] ) );
+        foreach ( $this->pages as $page_id ) {
+            $this->assertTrue( current_user_can( 'edit_post', $page_id ) );
+        }
     }
 
     public function test_repository_normalizes_missing_and_corrupt_configuration(): void {
@@ -145,13 +150,16 @@ final class Authorization_Integration_Test extends WP_UnitTestCase {
     }
 
     public function test_foreign_page_is_denied_through_edit_capability_and_rest(): void {
-        $foreign = $this->pages['tennis'];
-        wp_set_current_user( $this->users['fb'] );
-        $this->assertFalse( current_user_can( 'edit_post', $foreign ) );
-        $request = new WP_REST_Request( 'POST', '/wp/v2/pages/' . $foreign );
-        $request->set_param( 'title', 'Unauthorized' );
-        $response = rest_get_server()->dispatch( $request );
-        $this->assertSame( 403, $response->get_status() );
+        foreach ( array( 'fb' => 'tennis', 'youth' => 'football_training' ) as $fixture => $page_key ) {
+            $foreign = $this->pages[ $page_key ];
+            wp_set_current_user( $this->users[ $fixture ] );
+            $this->assertFalse( current_user_can( 'edit_post', $foreign ) );
+            $request = new WP_REST_Request( 'POST', '/wp/v2/pages/' . $foreign );
+            $request->set_param( 'title', 'Unauthorized' );
+            $response = rest_get_server()->dispatch( $request );
+            $this->assertSame( 403, $response->get_status() );
+        }
+
     }
 
     public function test_system_context_and_hierarchy_cycles_do_not_block_or_grant(): void {
