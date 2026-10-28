@@ -46,22 +46,42 @@ final class Write_Guard_Integration_Test extends WP_UnitTestCase {
                 $this->assertStringContainsString( 'only administrators', strtolower( $exception->getMessage() ) );
             }
         }
-        foreach ( array( 'post_parent' => $this->pages['tennis'], 'menu_order' => 12 ) as $field => $value ) {
-            $_POST = array( 'post_ID' => $this->pages['football_training'], 'post_type' => 'page', '_inline_edit' => wp_create_nonce( 'inlineeditnonce' ), 'screen' => 'edit-page', 'post_view' => 'list', $field => $value );
+        $die_handler = static function ( $message ): void {
+            throw new WPDieException( (string) $message );
+        };
+        $get_die_handler = static fn() => $die_handler;
+        add_filter( 'wp_die_handler', $get_die_handler );
+        add_filter( 'wp_die_ajax_handler', $get_die_handler );
+        add_filter( 'wp_doing_ajax', '__return_true' );
+        try {
+            foreach ( array( 'post_parent' => $this->pages['tennis'], 'menu_order' => 12 ) as $field => $value ) {
+                $nonce = wp_create_nonce( 'inlineeditnonce' );
+                $_POST = array( 'post_ID' => $this->pages['football_training'], 'post_type' => 'page', '_inline_edit' => $nonce, 'screen' => 'edit-page', 'post_view' => 'list', $field => $value );
+                $_REQUEST = $_POST;
+                ob_start();
+                try {
+                    wp_ajax_inline_save();
+                    $this->fail( 'Expected Quick Edit structure update to be forbidden: ' . $field );
+                } catch ( WPDieException $exception ) {
+                    $this->assertStringContainsString( 'only administrators', strtolower( $exception->getMessage() ) );
+                } finally {
+                    ob_end_clean();
+                    $_POST = array();
+                    $_REQUEST = array();
+                }
+            }
             try {
-                wp_ajax_inline_save();
-                $this->fail( 'Expected Quick Edit structure update to be forbidden: ' . $field );
+                bulk_edit_posts( array( 'post_type' => 'page', '_status' => '-1', 'post' => array( $this->pages['football_training'] ), 'post_parent' => $this->pages['tennis'] ) );
+                $this->fail( 'Expected bulk edit move to be forbidden.' );
             } catch ( WPDieException $exception ) {
                 $this->assertStringContainsString( 'only administrators', strtolower( $exception->getMessage() ) );
-            } finally {
-                $_POST = array();
             }
-        }
-        try {
-            bulk_edit_posts( array( 'post_type' => 'page', '_status' => '-1', 'post' => array( $this->pages['football_training'] ), 'post_parent' => $this->pages['tennis'] ) );
-            $this->fail( 'Expected bulk edit move to be forbidden.' );
-        } catch ( WPDieException $exception ) {
-            $this->assertStringContainsString( 'only administrators', strtolower( $exception->getMessage() ) );
+        } finally {
+            remove_filter( 'wp_die_handler', $get_die_handler );
+            remove_filter( 'wp_die_ajax_handler', $get_die_handler );
+            remove_filter( 'wp_doing_ajax', '__return_true' );
+            $_POST = array();
+            $_REQUEST = array();
         }
         $this->assertSame( $this->pages['football'], (int) get_post_field( 'post_parent', $this->pages['football_training'] ) );
         $this->assertSame( 0, (int) get_post_field( 'menu_order', $this->pages['football_training'] ) );

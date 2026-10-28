@@ -9,7 +9,7 @@
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       jp-permissions
  * Domain Path:       /languages
- * Requires at least: 6.4
+ * Requires at least: 7.1
  * Requires PHP:      8.0
  *
  * @package JayPee\Permissions
@@ -35,18 +35,21 @@ require_once __DIR__ . '/includes/class-updates.php';
 require_once __DIR__ . '/includes/class-group-repository.php';
 require_once __DIR__ . '/includes/class-branch-policy.php';
 require_once __DIR__ . '/includes/class-capabilities.php';
-require_once __DIR__ . '/includes/class-write-guard.php';
-require_once __DIR__ . '/includes/class-groups-page.php';
-require_once __DIR__ . '/includes/class-pages-list.php';
+require_once __DIR__ . '/includes/class-editor.php';
 require_once __DIR__ . '/includes/class-lifecycle.php';
+require_once __DIR__ . '/includes/class-write-guard.php';
+require_once __DIR__ . '/includes/class-pages-list.php';
+require_once __DIR__ . '/includes/class-user-profile.php';
 
 Updates::init();
 Lifecycle::init();
 BranchPolicy::init();
 Capabilities::init();
+Editor::init();
 WriteGuard::init();
 GroupsPage::init();
 PagesList::init();
+UserProfile::init();
 
 /**
  * Bootstrap.
