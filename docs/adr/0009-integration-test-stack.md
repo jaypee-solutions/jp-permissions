@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Stub-based unit tests remain useful, but capability and write behavior depends on WordPress core. wp-env `tests-cli` supplies `WP_TESTS_DIR=/wordpress-phpunit`; the WordPress test bootstrap requires `yoast/phpunit-polyfills` 1.1.0 or later. PHPUnit 10.5 compatibility is UNVERIFIED.
+Stub-based unit tests remain useful, but capability and write behavior depends on WordPress core. wp-env `tests-cli` supplies `WP_TESTS_DIR=/wordpress-phpunit`; the WordPress 7.1 test bootstrap requires `yoast/phpunit-polyfills` 1.1.0 or later. With polyfills 1.1.5, PHPUnit 10.5 compatibility was tested during implementation but dependency resolution failed: polyfills 1.1.5 declares support only through PHPUnit 9, so the repository uses PHPUnit 9.6.
 
 ## Decision
 
@@ -14,4 +14,4 @@ Keep the existing stub-based unit suite. Add WordPress integration tests in wp-e
 
 ## Consequences
 
-Integration tests exercise real WordPress capability and request paths. The separate workflow avoids modifying the template-owned `ci.yml`. PHPUnit compatibility remains an implementation-time check with a concrete fallback.
+Integration tests exercise real WordPress capability and request paths. The separate workflow avoids modifying the template-owned `ci.yml`. PHPUnit 10.5 proved incompatible with the WordPress 7.1 test library in the integration environment; the repository now pins PHPUnit 9.6. The stub unit suite remains on the same PHPUnit installation.
