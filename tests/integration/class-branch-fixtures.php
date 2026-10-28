@@ -15,6 +15,7 @@ trait Branch_Fixtures {
     }
 
     protected function tearDown(): void {
+        wp_set_current_user( $this->users['admin'] );
         foreach ( $this->users as $user_id ) {
             wp_delete_user( $user_id );
         }

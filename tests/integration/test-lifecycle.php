@@ -30,9 +30,20 @@ final class Lifecycle_Integration_Test extends WP_UnitTestCase {
         $this->assertSame( 'publish', get_post_status( $page_id ) );
     }
 
-    public function test_auto_draft_cleanup_and_unrestricted_deletion_remain_available(): void {
+    public function test_trash_keeps_descendant_authorization_and_permanent_deletion_removes_it(): void {
+        wp_set_current_user( $this->users['admin'] );
+        wp_trash_post( $this->pages['football'] );
+        $this->assertTrue( current_user_can( 'edit_post', $this->pages['football_training'] ) );
+        wp_set_current_user( $this->users['admin'] );
+        wp_delete_post( $this->pages['football'], true );
         wp_set_current_user( $this->users['fb'] );
+        $this->assertFalse( current_user_can( 'edit_post', $this->pages['football_training'] ) );
+    }
+
+    public function test_auto_draft_cleanup_and_unrestricted_deletion_remain_available(): void {
+        wp_set_current_user( $this->users['admin'] );
         $auto_draft = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'auto-draft' ) );
+        wp_set_current_user( $this->users['fb'] );
         $this->assertNotFalse( wp_delete_post( $auto_draft, true ) );
         $this->assertNull( get_post( $auto_draft ) );
         foreach ( array( 'staff', 'admin' ) as $user ) {

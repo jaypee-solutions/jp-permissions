@@ -37,27 +37,64 @@ final class WriteGuard {
         if ( ! BranchPolicy::is_restricted_context() || ! is_object( $prepared ) ) {
             return $prepared;
         }
-        if ( ! empty( $prepared->ID ) ) {
-            $stored = get_post( (int) $prepared->ID );
-            if ( $stored instanceof WP_Post ) {
-                if ( $request->has_param( 'parent' ) && (int) $prepared->post_parent !== (int) $stored->post_parent ) {
-                    return self::error( 'parent' );
+        if ( empty( $prepared->ID ) ) {
+            $parent = isset( $prepared->post_parent ) ? get_post( (int) $prepared->post_parent ) : null;
+            if ( ! $parent instanceof WP_Post || 'page' !== $parent->post_type || in_array( $parent->post_status, array( 'auto-draft', 'trash' ), true ) || ! BranchPolicy::is_authorized_page( get_current_user_id(), $parent ) ) {
+                return self::error( 'parent' );
+            }
+            if ( isset( $prepared->menu_order ) && 0 !== (int) $prepared->menu_order ) {
+                return self::error( 'order' );
+            }
+            return $prepared;
+        }
+        $stored = get_post( (int) $prepared->ID );
+        if ( $stored instanceof WP_Post ) {
+            if ( self::is_root( $stored->ID ) ) {
+                if ( $request->has_param( 'slug' ) && $prepared->post_name !== $stored->post_name ) {
+                    return self::error( 'root_change' );
                 }
-                if ( $request->has_param( 'menu_order' ) && (int) $prepared->menu_order !== (int) $stored->menu_order ) {
-                    return self::error( 'order' );
+                if ( $request->has_param( 'status' ) && $prepared->post_status !== $stored->post_status ) {
+                    return self::error( 'root_change' );
                 }
+            }
+            if ( $request->has_param( 'parent' ) && (int) $prepared->post_parent !== (int) $stored->post_parent ) {
+                return self::error( 'parent' );
+            }
+            if ( $request->has_param( 'menu_order' ) && (int) $prepared->menu_order !== (int) $stored->menu_order ) {
+                return self::error( 'order' );
             }
         }
         return $prepared;
     }
 
     public static function insert_post_data( array $data, array $postarr, array $unsanitized_postarr, bool $update ): array {
-        if ( ! BranchPolicy::is_restricted_context() || 'page' !== ( $data['post_type'] ?? '' ) || ! $update || empty( $postarr['ID'] ) ) {
+        if ( ! BranchPolicy::is_restricted_context() || 'page' !== ( $data['post_type'] ?? '' ) ) {
+            return $data;
+        }
+        if ( ! $update ) {
+            $parent = get_post( (int) ( $data['post_parent'] ?? 0 ) );
+            if ( ! $parent instanceof WP_Post || 'page' !== $parent->post_type || in_array( $parent->post_status, array( 'auto-draft', 'trash' ), true ) || ! BranchPolicy::is_authorized_page( get_current_user_id(), $parent ) ) {
+                self::deny( 'parent' );
+            }
+            if ( (int) ( $data['menu_order'] ?? 0 ) !== 0 ) {
+                self::deny( 'order' );
+            }
+            return $data;
+        }
+        if ( empty( $postarr['ID'] ) ) {
             return $data;
         }
         $stored = get_post( (int) $postarr['ID'] );
         if ( ! $stored instanceof WP_Post ) {
             return $data;
+        }
+        if ( self::is_root( $stored->ID ) ) {
+            if ( array_key_exists( 'post_name', $unsanitized_postarr ) && $data['post_name'] !== $stored->post_name ) {
+                self::deny( 'root_change' );
+            }
+            if ( array_key_exists( 'post_status', $unsanitized_postarr ) && $data['post_status'] !== $stored->post_status ) {
+                self::deny( 'root_change' );
+            }
         }
         if ( 'trash' !== $stored->post_status && 'trash' === ( $data['post_status'] ?? '' ) ) {
             self::deny( 'delete' );
@@ -74,7 +111,19 @@ final class WriteGuard {
         return $data;
     }
 
+    private static function is_root( int $page_id ): bool {
+        foreach ( GroupRepository::all() as $group ) {
+            if ( in_array( $page_id, $group['roots'], true ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static function error( string $field ): WP_Error {
+        if ( 'root_change' === $field ) {
+            return new WP_Error( 'jp_permissions_forbidden_root_change', __( 'Only administrators can change the address or status of a branch root page.', 'jp-permissions' ), array( 'status' => 403 ) );
+        }
         if ( 'parent' === $field ) {
             return new WP_Error( 'jp_permissions_forbidden_parent', __( 'You are not allowed to place a page here. Pages can only be created inside your page branches, and only administrators can move pages.', 'jp-permissions' ), array( 'status' => 403 ) );
         }
