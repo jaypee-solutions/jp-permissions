@@ -44,17 +44,23 @@ final class BranchPolicy {
         if ( ! isset( self::$pages[ $user_id ] ) ) {
             $roots = self::roots_for( $user_id );
             $authorized = array();
-            foreach ( get_pages( array( 'post_status' => 'any', 'post_type' => 'page', 'number' => 0, 'hierarchical' => false ) ) as $page ) {
+            foreach ( get_posts( array( 'post_status' => 'any', 'post_type' => 'page', 'numberposts' => -1 ) ) as $page ) {
                 $cursor = $page;
                 $visited = array();
-                while ( $cursor instanceof WP_Post && ! isset( $visited[ $cursor->ID ] ) ) {
-                    $visited[ $cursor->ID ] = true;
-                    if ( in_array( $cursor->ID, $roots, true ) ) {
-                        $authorized[ $page->ID ] = $page->ID;
+                $cycle = false;
+                $found_root = false;
+                while ( $cursor instanceof WP_Post ) {
+                    if ( isset( $visited[ $cursor->ID ] ) ) {
+                        $cycle = true;
                         break;
                     }
+                    $visited[ $cursor->ID ] = true;
+                    $found_root = $found_root || in_array( $cursor->ID, $roots, true );
                     $parent_id = (int) $cursor->post_parent;
                     $cursor = $parent_id > 0 ? get_post( $parent_id ) : null;
+                }
+                if ( $found_root && ! $cycle ) {
+                    $authorized[ $page->ID ] = $page->ID;
                 }
             }
             self::$pages[ $user_id ] = array_values( $authorized );

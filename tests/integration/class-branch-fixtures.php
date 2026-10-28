@@ -44,12 +44,6 @@ trait Branch_Fixtures {
 
     /** Assign one or more roles; use jp_branch_editor in tickets that register it. */
     protected function create_fixture_user( string $key, array $roles ): int {
-        foreach ( $roles as &$role ) {
-            if ( 'jp_branch_editor' === $role && ! get_role( $role ) ) {
-                $role = 'subscriber';
-            }
-        }
-        unset( $role );
         $id = self::factory()->user->create( array( 'role' => reset( $roles ) ) );
         $user = new WP_User( $id );
         foreach ( array_slice( $roles, 1 ) as $role ) {

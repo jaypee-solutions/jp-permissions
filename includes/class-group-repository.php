@@ -59,6 +59,30 @@ final class GroupRepository {
         update_option( self::OPTION, array( 'schema' => self::SCHEMA, 'next_id' => is_array( $config ) && isset( $config['next_id'] ) ? absint( $config['next_id'] ) : 1, 'groups' => $groups ) );
     }
 
+    public static function remove_root( int $page_id ): void {
+        $groups = self::all();
+        foreach ( $groups as &$group ) {
+            $group['roots'] = array_values( array_diff( $group['roots'], array( $page_id ) ) );
+        }
+        unset( $group );
+        self::persist( $groups );
+    }
+
+    public static function remove_member( int $user_id ): void {
+        $groups = self::all();
+        foreach ( $groups as &$group ) {
+            $group['members'] = array_values( array_diff( $group['members'], array( $user_id ) ) );
+        }
+        unset( $group );
+        self::persist( $groups );
+    }
+
+    private static function persist( array $groups ): void {
+        $config = get_option( self::OPTION, array() );
+        $next_id = is_array( $config ) && isset( $config['next_id'] ) ? absint( $config['next_id'] ) : 1;
+        update_option( self::OPTION, array( 'schema' => self::SCHEMA, 'next_id' => $next_id, 'groups' => $groups ) );
+    }
+
     public static function groups_for_user( int $user_id ): array {
         return array_filter( self::all(), static fn ( array $group ): bool => in_array( $user_id, $group['members'], true ) );
     }

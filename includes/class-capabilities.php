@@ -11,7 +11,7 @@ final class Capabilities {
     public static function init(): void {
         add_filter( 'user_has_cap', array( self::class, 'grant' ), 10, 4 );
         add_filter( 'map_meta_cap', array( self::class, 'map' ), 10, 4 );
-        add_action( 'init', array( self::class, 'register_role' ) );
+        self::register_role();
     }
 
     public static function register_role(): void {
@@ -38,6 +38,9 @@ final class Capabilities {
             return $caps;
         }
         $post = get_post( (int) $args[0] );
+        if ( $post instanceof WP_Post && 'revision' === $post->post_type ) {
+            $post = get_post( (int) $post->post_parent );
+        }
         if ( ! $post instanceof WP_Post || ( 'page' !== $post->post_type && ! ( 'edit_post' === $cap && 'attachment' === $post->post_type ) ) ) {
             return $caps;
         }
