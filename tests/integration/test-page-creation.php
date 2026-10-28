@@ -2,6 +2,11 @@
 
 declare( strict_types = 1 );
 
+function jp_test_build_admin_menu(): void {
+    global $menu, $submenu, $pagenow, $typenow, $_wp_menu_nopriv, $_wp_submenu_nopriv;
+    require ABSPATH . 'wp-admin/menu.php';
+}
+
 final class Page_Creation_Integration_Test extends WP_UnitTestCase {
     use Branch_Fixtures;
 
@@ -81,6 +86,36 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
         $this->assertStringContainsString( 'Add subpage', $notice );
         $_GET = array();
         $GLOBALS['pagenow'] = 'edit.php';
+    }
+
+    public function test_pages_admin_menu_remains_accessible_after_hiding_add_new(): void {
+        wp_set_current_user( $this->users['fb'] );
+        $GLOBALS['pagenow'] = 'edit.php';
+        $GLOBALS['typenow'] = 'page';
+        $_GET = $_REQUEST = array( 'post_type' => 'page' );
+        $GLOBALS['menu'] = $GLOBALS['submenu'] = array();
+        $GLOBALS['_wp_menu_nopriv'] = $GLOBALS['_wp_submenu_nopriv'] = array();
+        $GLOBALS['wp_did_header'] = false;
+
+        try {
+            jp_test_build_admin_menu();
+            $this->assertFalse( has_action( 'admin_menu', array( \JayPee\Permissions\PageCreation::class, 'remove_add_new_menu' ) ) );
+            $this->assertSame( 10, has_action( 'admin_init', array( \JayPee\Permissions\PageCreation::class, 'remove_add_new_menu' ) ) );
+            \JayPee\Permissions\PageCreation::remove_add_new_menu();
+            $this->assertSame( 'edit.php?post_type=page', get_admin_page_parent() );
+            $this->assertTrue( user_can_access_admin_page() );
+            $this->assertNotContains( 'post-new.php?post_type=page', wp_list_pluck( $GLOBALS['submenu']['edit.php?post_type=page'] ?? array(), 2 ) );
+            $_GET = $_REQUEST = array( 'post_type' => 'post' );
+            $GLOBALS['typenow'] = 'post';
+            $GLOBALS['parent_file'] = '';
+            $this->assertFalse( user_can_access_admin_page() );
+        } catch ( WPDieException $exception ) {
+            $this->fail( 'The Pages screen was denied: ' . $exception->getMessage() );
+        } finally {
+            $_GET = $_REQUEST = array();
+            $GLOBALS['pagenow'] = 'edit.php';
+            $GLOBALS['typenow'] = '';
+        }
     }
 
     public function test_core_insert_requires_authorized_parent_and_default_order(): void {

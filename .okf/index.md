@@ -14,3 +14,4 @@ okf_version: "0.1"
 * [Pages admin list](concepts/pages-admin-list.md) - Pages list query, hierarchy rendering, pagination, and status counts.
 * [Yoast SEO page writes](concepts/yoast-seo-page-writes.md) - Yoast SEO free page metadata save path and capability interaction.
 * [Media capabilities](concepts/media-capabilities.md) - Attachment capability mapping and block-editor upload paths.
+* [Admin menu access](concepts/admin-menu-access.md) - wp-admin screen access check and the submenu-collapse trap.
