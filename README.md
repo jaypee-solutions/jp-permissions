@@ -30,6 +30,23 @@ npm run env:stop
 
 `.husky/pre-commit` runs `composer lint`, `.husky/pre-push` runs `composer test`.
 
+### WordPress integration tests
+
+Start the WordPress 7.1 wp-env tests environment, then run the shared integration
+suite in that container:
+
+```bash
+WP_ENV_PORT=9020 WP_ENV_TESTS_PORT=9021 npm run env:start
+npm run test:integration
+WP_ENV_PORT=9020 WP_ENV_TESTS_PORT=9021 npm run env:stop
+```
+
+Integration tests use `WP_UnitTestCase` and the reusable `Branch_Fixtures`
+trait in `tests/integration/class-branch-fixtures.php`. Add later ticket tests
+under `tests/integration/` and use the trait; its pages/users/group option are
+created and removed for each test. `create_fixture_user()` accepts role names,
+including `jp_branch_editor` once that role is registered by the plugin.
+
 ## Release
 
 1. Bump the version in **both** places in `jp-permissions.php` (the
