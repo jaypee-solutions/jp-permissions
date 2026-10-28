@@ -166,6 +166,10 @@ final class Authorization_Integration_Test extends WP_UnitTestCase {
         wp_set_current_user( 0 );
         $this->assertFalse( current_user_can( 'edit_post', $this->pages['football'] ) );
         $this->assertFalse( \JayPee\Permissions\BranchPolicy::is_restricted_context() );
+        wp_set_current_user( $this->users['fb'] );
+        add_filter( 'wp_doing_cron', '__return_true' );
+        $this->assertFalse( \JayPee\Permissions\BranchPolicy::is_restricted_context() );
+        remove_filter( 'wp_doing_cron', '__return_true' );
         $cycle_a = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'publish' ) );
         $cycle_b = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_parent' => $cycle_a ) );
         global $wpdb;
