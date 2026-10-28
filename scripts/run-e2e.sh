@@ -48,8 +48,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+WP_ENV_PORT="${WP_ENV_PORT:-8888}"
+WP_ENV_URL="${WP_ENV_URL:-http://localhost:${WP_ENV_PORT}}"
+
 # ── wp-env: start only if not already running ────────────────────────────────
-if curl -fs --max-time 3 http://localhost:8888/wp-login.php | grep -q 'id="user_login"'; then
+if curl -fs --max-time 3 "${WP_ENV_URL}/wp-login.php" | grep -q 'id="user_login"'; then
   echo "▶ wp-env already running, skipping start."
 else
   echo "▶ Starting wp-env..."
@@ -72,7 +75,8 @@ if [[ "$DO_SEED" == true ]]; then
 fi
 
 # ── Playwright env vars ───────────────────────────────────────────────────────
-export WP_BASE_URL=http://localhost:8888
+export WP_ENV_URL
+export WP_BASE_URL="$WP_ENV_URL"
 export WP_ADMIN_USER=admin
 export WP_ADMIN_PASS=password
 
