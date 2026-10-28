@@ -36,14 +36,23 @@ final class GroupRepository {
         return $groups[ $id ] ?? null;
     }
 
-    public static function save( ?int $id, string $name, array $roots, array $members ): int|WP_Error {
+    public static function save( ?int $id, string $name, array $roots, array $members ): int|\WP_Error {
+        $name = trim( $name );
+        if ( '' === $name || strlen( $name ) > 100 ) {
+            return new \WP_Error( 'jp_permissions_invalid_name' );
+        }
+        foreach ( self::all() as $other_id => $group ) {
+            if ( $id !== $other_id && 0 === strcasecmp( $name, $group['name'] ) ) {
+                return new \WP_Error( 'jp_permissions_duplicate_name' );
+            }
+        }
         $config = get_option( self::OPTION, array() );
         $groups = self::all();
         if ( null === $id ) {
             $id = is_array( $config ) && isset( $config['next_id'] ) ? absint( $config['next_id'] ) : 1;
             $id = max( 1, $id );
         }
-        $groups[ $id ] = array( 'name' => $name, 'roots' => self::ids( $roots ), 'members' => self::ids( $members ) );
+        $groups[ $id ] = array( 'name' => $name, 'roots' => self::valid_roots( $roots ), 'members' => self::valid_members( $members ) );
         update_option( self::OPTION, array(
             'schema' => self::SCHEMA,
             'next_id' => max( $id + 1, is_array( $config ) && isset( $config['next_id'] ) ? absint( $config['next_id'] ) : 1 ),
@@ -88,6 +97,7 @@ final class GroupRepository {
     }
 
     private static function ids( array $values ): array {
+
         $ids = array();
         foreach ( $values as $value ) {
             $id = absint( $value );
@@ -96,5 +106,16 @@ final class GroupRepository {
             }
         }
         return $ids;
+    }
+
+    private static function valid_roots( array $values ): array {
+        return array_values( array_filter( self::ids( $values ), static function ( int $id ): bool {
+            $page = get_post( $id );
+            return $page && 'page' === $page->post_type && ! in_array( $page->post_status, array( 'auto-draft', 'trash' ), true );
+        } ) );
+    }
+
+    private static function valid_members( array $values ): array {
+        return array_values( array_filter( self::ids( $values ), static fn( int $id ): bool => (bool) get_userdata( $id ) ) );
     }
 }
