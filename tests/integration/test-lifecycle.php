@@ -19,15 +19,31 @@ final class Lifecycle_Integration_Test extends WP_UnitTestCase {
         }
     }
 
-    public function test_trash_keeps_descendant_authorization_and_permanent_deletion_removes_it(): void {
+    public function test_restricted_users_cannot_trash_or_delete_pages(): void {
         wp_set_current_user( $this->users['fb'] );
-        wp_trash_post( $this->pages['football'] );
-        $this->assertTrue( current_user_can( 'edit_post', $this->pages['football_training'] ) );
+        $page_id = $this->pages['football'];
+        $this->assertFalse( wp_trash_post( $page_id ) );
+        $this->assertSame( 'publish', get_post_status( $page_id ) );
+        $this->assertFalse( wp_delete_post( $page_id, true ) );
+        $this->assertSame( 'publish', get_post_status( $page_id ) );
+        $this->assertFalse( wp_untrash_post( $page_id ) );
+        $this->assertSame( 'publish', get_post_status( $page_id ) );
+    }
 
-        wp_set_current_user( $this->users['admin'] );
-        wp_delete_post( $this->pages['football'], true );
+    public function test_auto_draft_cleanup_and_unrestricted_deletion_remain_available(): void {
         wp_set_current_user( $this->users['fb'] );
-        $this->assertFalse( current_user_can( 'edit_post', $this->pages['football_training'] ) );
+        $auto_draft = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'auto-draft' ) );
+        $this->assertNotFalse( wp_delete_post( $auto_draft, true ) );
+        $this->assertNull( get_post( $auto_draft ) );
+        foreach ( array( 'staff', 'admin' ) as $user ) {
+            wp_set_current_user( $this->users[ $user ] );
+            $page_id = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'publish' ) );
+            $this->assertNotFalse( wp_trash_post( $page_id ) );
+            $this->assertSame( 'trash', get_post_status( $page_id ) );
+            $this->assertNotFalse( wp_untrash_post( $page_id ) );
+            $this->assertSame( 'draft', get_post_status( $page_id ) );
+            $this->assertNotFalse( wp_delete_post( $page_id, true ) );
+        }
     }
 
     public function test_role_lifecycle_preserves_deactivation_and_repairs_upgrade(): void {
