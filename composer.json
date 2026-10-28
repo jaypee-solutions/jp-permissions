@@ -33,7 +33,6 @@
         "lint": "phpcs",
         "lint:fix": "phpcbf",
         "test": "phpunit",
-        "test:unit:coverage": "vendor/bin/phpunit --coverage-text",
         "build": "scripts/build-release.sh"
     }
 }

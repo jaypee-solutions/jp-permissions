@@ -22,7 +22,7 @@ final class Deletion_Integration_Test extends WP_UnitTestCase {
         add_filter( 'wp_die_handler', $get_die_handler );
         add_filter( 'wp_die_ajax_handler', $get_die_handler );
         try {
-            wp_update_post( array( 'ID' => $this->pages['football_training'], 'post_status' => 'trash' ), true );
+            wp_update_post( [ 'ID' => $this->pages['football_training'], 'post_status' => 'trash' ], true );
             $this->fail( 'Expected the trash transition to be forbidden.' );
         } catch ( WPDieException $exception ) {
             $this->assertStringContainsString( 'Only administrators can trash, restore, or delete pages.', $exception->getMessage() );
@@ -33,21 +33,21 @@ final class Deletion_Integration_Test extends WP_UnitTestCase {
         $this->assertSame( 'publish', get_post_status( $this->pages['football_training'] ) );
     }
     public function test_post_actions_and_pages_bulk_actions_enforce_delete_capability(): void {
-        foreach ( array( 'trash', 'untrash', 'delete' ) as $action ) {
+        foreach ( [ 'trash', 'untrash', 'delete' ] as $action ) {
             wp_set_current_user( $this->users['admin'] );
-            $page_id = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'untrash' === $action ? 'trash' : 'publish' ) );
+            $page_id = self::factory()->post->create( [ 'post_type' => 'page', 'post_status' => 'untrash' === $action ? 'trash' : 'publish' ] );
             wp_set_current_user( $this->users['fb'] );
             $this->run_deletion_action( $action, $page_id, 'trash-post_' . $page_id, false );
             $this->assertSame( 'untrash' === $action ? 'trash' : 'publish', get_post_status( $page_id ), 'post.php ' . $action );
 
             wp_set_current_user( $this->users['admin'] );
-            $bulk_id = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'untrash' === $action ? 'trash' : 'publish' ) );
+            $bulk_id = self::factory()->post->create( [ 'post_type' => 'page', 'post_status' => 'untrash' === $action ? 'trash' : 'publish' ] );
             wp_set_current_user( $this->users['fb'] );
             $this->run_deletion_action( $action, $bulk_id, 'bulk-posts', false );
             $this->assertSame( 'untrash' === $action ? 'trash' : 'publish', get_post_status( $bulk_id ), 'Pages bulk ' . $action );
 
             wp_set_current_user( $this->users['admin'] );
-            $admin_id = self::factory()->post->create( array( 'post_type' => 'page', 'post_status' => 'untrash' === $action ? 'trash' : 'publish' ) );
+            $admin_id = self::factory()->post->create( [ 'post_type' => 'page', 'post_status' => 'untrash' === $action ? 'trash' : 'publish' ] );
             $this->run_deletion_action( $action, $admin_id, 'bulk-posts', true );
             $this->assertSame( 'delete' === $action ? false : ( 'untrash' === $action ? 'draft' : 'trash' ), get_post_status( $admin_id ), 'Administrator ' . $action );
         }
@@ -64,7 +64,7 @@ final class Deletion_Integration_Test extends WP_UnitTestCase {
         add_filter( 'wp_die_ajax_handler', $get_die_handler );
         try {
             if ( ! current_user_can( 'delete_post', $page_id ) ) {
-                wp_die( 'Sorry, you are not allowed to delete this item.', '', array( 'response' => 403 ) );
+                wp_die( 'Sorry, you are not allowed to delete this item.', '', [ 'response' => 403 ] );
             }
             if ( 'trash' === $action ) {
                 $result = wp_trash_post( $page_id );

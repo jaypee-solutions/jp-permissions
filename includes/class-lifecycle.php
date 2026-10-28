@@ -5,31 +5,34 @@ declare( strict_types = 1 );
 
 namespace JayPee\Permissions;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Lifecycle {
     public static function init(): void {
-        register_activation_hook( PLUGIN_FILE, array( self::class, 'activate' ) );
-        register_uninstall_hook( PLUGIN_FILE, array( self::class, 'uninstall' ) );
-        add_action( 'plugins_loaded', array( self::class, 'maybe_upgrade' ) );
-        add_action( 'deleted_post', array( self::class, 'deleted_post' ), 10, 2 );
-        add_action( 'deleted_user', array( self::class, 'deleted_user' ) );
+        register_activation_hook( PLUGIN_FILE, [ self::class, 'activate' ] );
+        add_action( 'plugins_loaded', [ self::class, 'maybe_upgrade' ] );
+        add_action( 'deleted_post', [ self::class, 'deleted_post' ], 10, 2 );
+        add_action( 'deleted_user', [ self::class, 'deleted_user' ] );
     }
 
     public static function activate(): void {
         if ( is_multisite() ) {
             wp_die( esc_html__( 'JP Permissions does not support multisite.', 'jp-permissions' ) );
         }
+        register_uninstall_hook( PLUGIN_FILE, [ self::class, 'uninstall' ] );
         self::register_role();
     }
 
     public static function maybe_upgrade(): void {
-        $config = get_option( GroupRepository::OPTION, array() );
-        if ( is_array( $config ) && isset( $config['schema'] ) && GroupRepository::SCHEMA === $config['schema'] ) {
-            self::register_role();
+        self::register_role();
+        $config = get_option( GroupRepository::OPTION, [] );
+        if ( ! is_array( $config ) || ! isset( $config['schema'] ) || GroupRepository::SCHEMA !== $config['schema'] ) {
+            return;
         }
     }
     public static function register_role(): void {
         if ( ! get_role( 'jp_branch_editor' ) ) {
-            add_role( 'jp_branch_editor', __( 'Branch Editor', 'jp-permissions' ), array( 'read' => true, 'upload_files' => true ) );
+            add_role( 'jp_branch_editor', __( 'Branch Editor', 'jp-permissions' ), [ 'read' => true, 'upload_files' => true ] );
         }
     }
 
@@ -45,7 +48,7 @@ final class Lifecycle {
 
     public static function uninstall(): void {
         delete_option( GroupRepository::OPTION );
-        $users = get_users( array( 'role' => 'jp_branch_editor', 'fields' => 'ID' ) );
+        $users = get_users( [ 'role' => 'jp_branch_editor', 'fields' => 'ID' ] );
         foreach ( $users as $user_id ) {
             $user = new \WP_User( (int) $user_id );
             $user->set_role( 'subscriber' );
