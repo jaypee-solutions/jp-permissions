@@ -33,7 +33,7 @@ final class Lifecycle_Integration_Test extends WP_UnitTestCase {
     public function test_role_lifecycle_preserves_deactivation_and_repairs_upgrade(): void {
         $option = get_option( 'jp_permissions_groups' );
         $this->assertNotFalse( get_role( 'jp_branch_editor' ) );
-        deactivate_plugins( plugin_basename( PLUGIN_FILE ) );
+        deactivate_plugins( plugin_basename( \JayPee\Permissions\PLUGIN_FILE ) );
         $this->assertNotFalse( get_role( 'jp_branch_editor' ) );
         $this->assertSame( $option, get_option( 'jp_permissions_groups' ) );
         remove_role( 'jp_branch_editor' );
@@ -44,7 +44,7 @@ final class Lifecycle_Integration_Test extends WP_UnitTestCase {
     public function test_uninstall_cleans_configuration_role_and_branch_editor_accounts(): void {
         \JayPee\Permissions\Lifecycle::uninstall();
         $this->assertFalse( get_option( 'jp_permissions_groups', false ) );
-        $this->assertFalse( get_role( 'jp_branch_editor' ) );
+        $this->assertNull( get_role( 'jp_branch_editor' ) );
         $this->assertSame( 'subscriber', get_userdata( $this->users['fb'] )->roles[0] );
     }
 }
