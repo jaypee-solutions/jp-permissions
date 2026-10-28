@@ -7,6 +7,8 @@ function jp_test_build_admin_menu(): void {
     require ABSPATH . 'wp-admin/menu.php';
 }
 
+final class Page_Creation_Redirect extends RuntimeException {}
+
 final class Page_Creation_Integration_Test extends WP_UnitTestCase {
     use Branch_Fixtures;
 
@@ -25,11 +27,11 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
     public function test_add_subpage_handler_creates_auto_draft_and_redirects(): void {
         wp_set_current_user( $this->users['fb'] );
         $_GET = $_REQUEST = array( 'parent' => $this->pages['football_training'], '_wpnonce' => wp_create_nonce( 'jp_permissions_add_subpage_' . $this->pages['football_training'] ) );
-        add_filter( 'wp_redirect', static function ( $location ) { throw new RuntimeException( $location ); } );
+        add_filter( 'wp_redirect', static function ( $location ) { throw new Page_Creation_Redirect( $location ); } );
         try {
-\JayPee\Permissions\PageCreation::add_subpage();
+            do_action( 'admin_post_jp_permissions_add_subpage' );
             $this->fail( 'Expected redirect.' );
-        } catch ( RuntimeException $exception ) {
+        } catch ( Page_Creation_Redirect $exception ) {
             $child = get_posts( array( 'post_type' => 'page', 'post_status' => 'auto-draft', 'post_parent' => $this->pages['football_training'], 'numberposts' => 1 ) );
             $this->assertCount( 1, $child );
             $this->assertStringContainsString( 'post.php?post=' . $child[0]->ID . '&action=edit', $exception->getMessage() );
@@ -69,11 +71,11 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
         wp_set_current_user( $this->users['fb'] );
         $GLOBALS['pagenow'] = 'post-new.php';
         $_GET = array( 'post_type' => 'page' );
-        add_filter( 'wp_redirect', static function ( $location ) { throw new RuntimeException( $location ); } );
+        add_filter( 'wp_redirect', static function ( $location ) { throw new Page_Creation_Redirect( $location ); } );
         try {
-            \JayPee\Permissions\PageCreation::redirect_generic_new_page();
+            do_action( 'load-post-new.php' );
             $this->fail( 'Expected redirect.' );
-        } catch ( RuntimeException $exception ) {
+        } catch ( Page_Creation_Redirect $exception ) {
             $this->assertStringContainsString( 'edit.php?post_type=page', $exception->getMessage() );
             $this->assertStringContainsString( 'jp_permissions_notice=use_add_subpage', $exception->getMessage() );
         } finally {
@@ -81,7 +83,7 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
         }
         $_GET = array( 'jp_permissions_notice' => 'use_add_subpage' );
         ob_start();
-        \JayPee\Permissions\PageCreation::notice();
+        do_action( 'admin_notices' );
         $notice = ob_get_clean();
         $this->assertStringContainsString( 'Add subpage', $notice );
         $_GET = array();
