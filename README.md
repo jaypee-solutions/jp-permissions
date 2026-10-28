@@ -1,6 +1,6 @@
 # JP Permissions for WordPress
 
-JP Permissions for WordPress lets an Administrator delegate parts of the page tree to volunteer editors while keeping control of site structure.
+JP Permissions for WordPress lets an Administrator delegate parts of the page tree to Branch Editors while keeping control of site structure.
 
 Administrators create branch groups, assign each one or more branch roots, and add members. A member's authorized pages are the branch roots and all pages below them. Membership only adds access: an Editor or Administrator remains unrestricted even when added to a branch group.
 

@@ -7,7 +7,7 @@ Stable tag: 0.1.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-JP Permissions lets an Administrator delegate parts of the page tree to volunteer editors while keeping control of site structure.
+JP Permissions lets an Administrator delegate parts of the page tree to Branch Editors while keeping control of site structure.
 
 == Description ==
 
@@ -37,5 +37,8 @@ The Pages list status counts show site-wide totals rather than counts limited to
 
 == Changelog ==
 
+= Unreleased =
+* Page Branches: branch groups, scoped page editing and publishing, and the Branch Editor role.
+
 = 0.1.0 =
-* Page Branches: branch groups, delegated page editing, and Branch Editor role.
+* Initial scaffolding from wp-plugin-template.
