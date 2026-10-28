@@ -77,6 +77,14 @@ $users = array(
     'fb_staff' => jp_e2e_user( 'fb_staff', 'editor' ),
     'sub' => jp_e2e_user( 'sub', 'subscriber' ),
 );
+foreach ( array( 'E2E Football Page', 'E2E Image Upload' ) as $title ) {
+    foreach ( get_posts( array( 'post_type' => 'page', 'post_status' => 'any', 'title' => $title, 'numberposts' => -1 ) ) as $post ) {
+        wp_delete_post( $post->ID, true );
+    }
+}
+foreach ( get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'author' => $users['fb'], 'title' => 'branch-image', 'numberposts' => -1 ) ) as $attachment ) {
+    wp_delete_attachment( $attachment->ID, true );
+}
 update_option( 'jp_permissions_groups', array(
     'schema' => 1,
     'next_id' => 5,
