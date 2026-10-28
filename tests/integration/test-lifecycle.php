@@ -20,7 +20,7 @@ final class Lifecycle_Integration_Test extends WP_UnitTestCase {
     }
 
     public function test_trash_keeps_descendant_authorization_and_permanent_deletion_removes_it(): void {
-        wp_set_current_user( $this->users['fb'] );
+        wp_set_current_user( $this->users['admin'] );
         wp_trash_post( $this->pages['football'] );
         $this->assertTrue( current_user_can( 'edit_post', $this->pages['football_training'] ) );
 
