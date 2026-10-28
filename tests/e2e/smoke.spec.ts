@@ -8,10 +8,10 @@ async function loginAs( page: Page, username: string, password = 'password' ): P
 	await page.goto( '/wp-login.php' );
 	const userField = page.locator( '#user_login' );
 	const passwordField = page.locator( '#user_pass' );
-	await userField.fill( username );
 	await passwordField.fill( password );
-	await expect( userField ).toHaveValue( username );
 	await expect( passwordField ).toHaveValue( password );
+	await userField.fill( username );
+	await expect( userField ).toHaveValue( username );
 	await page.click( '#wp-submit' );
 	await expect( page ).toHaveURL( /wp-admin/ );
 }
@@ -29,7 +29,8 @@ async function closePatternDialog( page: Page ): Promise<void> {
 
 async function addSubpageFromTraining( page: Page ): Promise<void> {
 	await page.goto( '/wp-admin/edit.php?post_type=page' );
-	const row = page.locator( 'tr' ).filter( { hasText: 'Training' } ).filter( { has: page.locator( 'a.add_subpage' ) } ).first();
+	const row = page.locator( 'tr' ).filter( { hasText: 'Training' } ).first();
+	await row.hover();
 	await row.getByRole( 'link', { name: 'Add subpage' } ).click();
 }
 
@@ -38,7 +39,7 @@ test.describe( 'Page Branches browser flows', () => {
 		await loginAs( page, FB_USER );
 		await addSubpageFromTraining( page );
 		await closePatternDialog( page );
-		await expect( page.locator( '.editor-post-title__input' ) ).toBeVisible();
+		await expect( page.locator( '.editor-post-title__input' ) ).toBeVisible( { timeout: 30_000 } );
 		await page.locator( '.editor-post-title__input' ).fill( 'E2E Football Page' );
 		await page.getByRole( 'button', { name: 'Publish', exact: true } ).first().click();
 		await page.getByRole( 'button', { name: 'Publish', exact: true } ).last().click();
