@@ -35,6 +35,9 @@ require_once __DIR__ . '/includes/class-updates.php';
 require_once __DIR__ . '/includes/class-group-repository.php';
 require_once __DIR__ . '/includes/class-branch-policy.php';
 require_once __DIR__ . '/includes/class-capabilities.php';
+require_once __DIR__ . '/includes/class-groups-page.php';
+
+GroupsPage::init();
 
 Updates::init();
 BranchPolicy::init();
