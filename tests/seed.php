@@ -90,6 +90,16 @@ $users = array(
     'fb_staff' => jp_e2e_user( 'fb_staff', 'editor' ),
     'sub' => jp_e2e_user( 'sub', 'subscriber' ),
 );
+// Fresh users otherwise get the welcome guide and the starter-pattern chooser, whose modals
+// cover the editor at unpredictable times (the chooser opens once patterns finish loading).
+global $wpdb;
+foreach ( $users as $user_id ) {
+    update_user_meta( $user_id, $wpdb->get_blog_prefix() . 'persisted_preferences', array(
+        'core/edit-post' => array( 'welcomeGuide' => false ),
+        'core'           => array( 'enableChoosePatternModal' => false ),
+        '_modified'      => gmdate( 'c' ),
+    ) );
+}
 // Fixtures have no pages below Football → Training; everything there was created by earlier E2E runs.
 foreach ( get_posts( array( 'post_type' => 'page', 'post_status' => array_keys( get_post_stati() ), 'post_parent' => $pages['football-training'], 'numberposts' => -1, 'fields' => 'ids' ) ) as $post_id ) {
     wp_delete_post( $post_id, true );

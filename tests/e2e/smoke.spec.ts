@@ -18,17 +18,6 @@ async function loginAs( page: Page, username: string, password = 'password' ): P
 	await expect( page ).toHaveURL( /wp-admin/ );
 }
 
-async function closePatternDialog( page: Page ): Promise<void> {
-	const dialog = page.getByRole( 'dialog', { name: 'Choose a pattern' } );
-	try {
-		await dialog.waitFor( { state: 'visible', timeout: 10_000 } );
-	} catch {
-		return;
-	}
-	await dialog.getByRole( 'button', { name: 'Close' } ).click();
-	await expect( dialog ).toBeHidden();
-}
-
 type RestPage = { id: number; parent: number; title: { rendered: string } };
 
 // Resolve fixture pages through the public REST API so lookups never depend on Pages-list pagination.
@@ -55,7 +44,6 @@ test.describe( 'Page Branches browser flows', () => {
 	test( 'E2E-1: Branch Editor creates and publishes a subpage under Training', async ( { page } ) => {
 		await loginAs( page, FB_USER );
 		await addSubpageFromTraining( page );
-		await closePatternDialog( page );
 		const title = page.frameLocator( 'iframe' ).locator( '.wp-block-post-title' );
 		await expect( title ).toBeVisible();
 		const pageTitle = `E2E Football Page ${ Date.now() }`;
@@ -85,18 +73,17 @@ test.describe( 'Page Branches browser flows', () => {
 		const training = await publishedPage( page.request, 'Training', football.id );
 		await loginAs( page, FB_USER );
 		await page.goto( editUrl( training.id ) );
-		await closePatternDialog( page );
+		// Absence only means something once the editor has rendered.
+		await expect( page.frameLocator( 'iframe' ).locator( '.wp-block-post-title' ) ).toBeVisible();
 		await expect( page.getByText( 'Parent', { exact: true } ) ).toHaveCount( 0 );
 		await loginAs( page, ADMIN_USER, ADMIN_PASS );
 		await page.goto( editUrl( football.id ) );
-		await closePatternDialog( page );
 		await expect( page.getByText( 'Parent', { exact: true } ) ).toBeVisible();
 	} );
 
 	test( 'Branch Editor uploads an image with resized versions', async ( { page } ) => {
 		await loginAs( page, FB_USER );
 		await addSubpageFromTraining( page );
-		await closePatternDialog( page );
 		const title = page.frameLocator( 'iframe' ).locator( '.wp-block-post-title' );
 		await expect( title ).toBeVisible();
 		await title.fill( `E2E Image Upload ${ Date.now() }` );
