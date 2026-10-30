@@ -12,6 +12,7 @@
     "test:e2e:run": "scripts/run-e2e.sh",
     "test:e2e:dev": "scripts/run-e2e.sh",
     "test:e2e:dev:grep": "scripts/run-e2e.sh --grep",
+    "test:integration": "WP_ENV_HOME=./.wp-env npx --no-install wp-env run tests-cli --env-cwd=wp-content/plugins/$(basename \"$PWD\") vendor/bin/phpunit -c phpunit-integration.xml.dist",
     "test:e2e": "npx --no-install playwright test",
     "test:e2e:ui": "npx --no-install playwright test --ui",
     "test:install": "npx --no-install playwright install --with-deps chromium",
@@ -22,8 +23,8 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@playwright/test": "^1.48.0",
-    "@wordpress/env": "^10.10.0",
+    "@playwright/test": "^1.64.1",
+    "@wordpress/env": "^12.0.0",
     "husky": "^9.1.7"
   }
 }

@@ -4,24 +4,24 @@ declare( strict_types = 1 );
 
 final class Own_Uploads_Integration_Test extends WP_UnitTestCase {
     use Branch_Fixtures {
-        setUp as private setUpBranchFixtures;
-        tearDown as private tearDownBranchFixtures;
+        set_up as private set_up_branch_fixtures;
+        tear_down as private tear_down_branch_fixtures;
     }
 
     private string $image_path;
 
-    protected function setUp(): void {
+    public function set_up(): void {
         do_action( 'plugins_loaded' );
-        $this->setUpBranchFixtures();
+        $this->set_up_branch_fixtures();
         $this->image_path = tempnam( sys_get_temp_dir(), 'jp-permissions-' );
         file_put_contents( $this->image_path, base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAUAQMAAAC3R49OAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAADUExURf8AABniCTcAAAAHdElNRQfqChwUJwWa9C+EAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI2LTEwLTI4VDIwOjM5OjA1KzAwOjAwaoSufQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNi0xMC0yOFQyMDozOTowNSswMDowMBvZFsEAAAAodEVYdGRhdGU6dGltZXN0YW1wADIwMjYtMTAtMjhUMjA6Mzk6MDUrMDA6MDBMzDceAAAADElEQVQI12NgoC4AAABQAAEiE+h1AAAAAElFTkSuQmCC' ) );
     }
 
-    protected function tearDown(): void {
+    public function tear_down(): void {
         if ( file_exists( $this->image_path ) ) {
             unlink( $this->image_path );
         }
-        $this->tearDownBranchFixtures();
+        $this->tear_down_branch_fixtures();
     }
 
     public function test_branch_editor_uploads_sideloads_and_edits_own_attachment_only(): void {
@@ -33,13 +33,15 @@ final class Own_Uploads_Integration_Test extends WP_UnitTestCase {
         $sideload_path = tempnam( sys_get_temp_dir(), 'jp-permissions-sideload-' );
         file_put_contents( $sideload_path, file_get_contents( $this->image_path ) );
         $upload = new WP_REST_Request( 'POST', '/wp/v2/media' );
-        $upload->set_file_params( [ 'file' => [
-            'tmp_name' => $this->image_path,
-            'name' => 'upload.png',
-            'type' => 'image/png',
-            'error' => UPLOAD_ERR_OK,
-            'size' => filesize( $this->image_path ),
-        ] ] );
+        $upload->set_file_params( [
+            'file' => [
+                'tmp_name' => $this->image_path,
+                'name' => 'upload.png',
+                'type' => 'image/png',
+                'error' => UPLOAD_ERR_OK,
+                'size' => filesize( $this->image_path ),
+            ],
+        ] );
         $upload->set_param( 'post', $training );
         $upload_response = rest_get_server()->dispatch( $upload );
         $this->assertSame( 201, $upload_response->get_status(), wp_json_encode( $upload_response->get_data() ) );

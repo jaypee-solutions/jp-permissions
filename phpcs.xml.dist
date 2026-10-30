@@ -4,6 +4,7 @@
 
     <file>jp-permissions.php</file>
     <file>includes</file>
+    <file>tests</file>
 
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
@@ -29,6 +30,32 @@
         <!-- Light docblocks instead of full @param/@return documentation. -->
         <exclude name="Squiz.Commenting"/>
         <exclude name="Generic.Commenting.DocComment"/>
+    </rule>
+
+    <!-- Enforce the project style the exclusions above make room for. -->
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+    <rule ref="Generic.WhiteSpace.DisallowTabIndent"/>
+
+    <!-- Test-only exceptions. -->
+    <rule ref="WordPress.WP.AlternativeFunctions.file_system_operations_fwrite">
+        <!-- The integration bootstrap writes its abort message to STDERR. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+        <!-- PHPUnit file names follow their test classes. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="Generic.Files.OneObjectStructurePerFile">
+        <!-- Test doubles live next to the tests that use them. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode">
+        <!-- UpdatesTest checks the encoded token storage. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed">
+        <!-- WordPress function stubs keep core signatures. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
     </rule>
 
     <rule ref="WordPress.WP.I18n">

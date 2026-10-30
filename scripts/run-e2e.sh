@@ -10,10 +10,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # ── Defaults ────────────────────────────────────────────────────────────────
-GREP_PATTERN=""
 DO_STOP=false
 DO_SEED=true
 DO_OPCACHE=true
+PLAYWRIGHT_ARGS=()
 
 # ── Argument parsing ─────────────────────────────────────────────────────────
 usage() {
@@ -24,6 +24,7 @@ Usage: scripts/run-e2e.sh [options]
   --stop           Stop wp-env after the run
   --no-seed        Skip seed (use existing DB state)
   --no-opcache     Skip OpCache flush (when no PHP files changed)
+  --              Forward remaining arguments to Playwright
   -h, --help       Show this help
 EOF
 }
@@ -34,7 +35,7 @@ while [[ $# -gt 0 ]]; do
       if [[ $# -lt 2 || -z "${2-}" ]]; then
         echo "Error: --grep requires a PATTERN argument." >&2; usage; exit 1
       fi
-      GREP_PATTERN="$2"; shift 2 ;;
+      PLAYWRIGHT_ARGS+=(--grep "$2"); shift 2 ;;
     --stop)
       DO_STOP=true; shift ;;
     --no-seed)
@@ -43,8 +44,12 @@ while [[ $# -gt 0 ]]; do
       DO_OPCACHE=false; shift ;;
     -h|--help)
       usage; exit 0 ;;
+    --)
+      shift
+      PLAYWRIGHT_ARGS+=("$@")
+      break ;;
     *)
-      echo "Unknown option: $1" >&2; usage; exit 1 ;;
+      PLAYWRIGHT_ARGS+=("$1"); shift ;;
   esac
 done
 
@@ -52,7 +57,8 @@ WP_ENV_PORT="${WP_ENV_PORT:-8888}"
 WP_ENV_URL="${WP_ENV_URL:-http://localhost:${WP_ENV_PORT}}"
 
 # ── wp-env: start only if not already running ────────────────────────────────
-if curl -fs --max-time 3 "${WP_ENV_URL}/wp-login.php" | grep -q 'id="user_login"'; then
+WP_BASE_URL="${WP_ENV_URL:-http://localhost:8888}"
+if curl -fs --max-time 3 "$WP_BASE_URL/wp-login.php" | grep -q 'id="user_login"'; then
   echo "▶ wp-env already running, skipping start."
 else
   echo "▶ Starting wp-env..."
@@ -75,8 +81,7 @@ if [[ "$DO_SEED" == true ]]; then
 fi
 
 # ── Playwright env vars ───────────────────────────────────────────────────────
-export WP_ENV_URL
-export WP_BASE_URL="$WP_ENV_URL"
+export WP_BASE_URL
 export WP_ADMIN_USER=admin
 export WP_ADMIN_PASS=password
 
@@ -89,10 +94,6 @@ fi
 
 # ── Run Playwright ────────────────────────────────────────────────────────────
 echo "▶ Running E2E tests..."
-PLAYWRIGHT_ARGS=()
-if [[ -n "$GREP_PATTERN" ]]; then
-  PLAYWRIGHT_ARGS+=(--grep "$GREP_PATTERN")
-fi
 set +e
 npx --no-install playwright test "${PLAYWRIGHT_ARGS[@]}"
 PLAYWRIGHT_EXIT=$?

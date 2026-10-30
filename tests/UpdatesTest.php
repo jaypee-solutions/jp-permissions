@@ -24,7 +24,6 @@ final class FakeWpError {
         return $this->message;
     }
 }
-
 /**
  * @covers \JayPee\Permissions\Updates
  */

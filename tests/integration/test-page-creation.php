@@ -2,11 +2,6 @@
 
 declare( strict_types = 1 );
 
-function jp_test_build_admin_menu(): void {
-    global $menu, $submenu, $pagenow, $typenow, $_wp_menu_nopriv, $_wp_submenu_nopriv;
-    require ABSPATH . 'wp-admin/menu.php';
-}
-
 final class Page_Creation_Redirect extends RuntimeException {}
 
 final class Page_Creation_Integration_Test extends WP_UnitTestCase {
@@ -26,8 +21,11 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
 
     public function test_add_subpage_handler_creates_auto_draft_and_redirects(): void {
         wp_set_current_user( $this->users['fb'] );
-        $_GET = $_REQUEST = [ 'parent' => $this->pages['football_training'], '_wpnonce' => wp_create_nonce( 'jp_permissions_add_subpage_' . $this->pages['football_training'] ) ];
-        add_filter( 'wp_redirect', static function ( $location ) { throw new Page_Creation_Redirect( $location ); } );
+        $_GET = [ 'parent' => $this->pages['football_training'], '_wpnonce' => wp_create_nonce( 'jp_permissions_add_subpage_' . $this->pages['football_training'] ) ];
+        $_REQUEST = $_GET;
+        add_filter( 'wp_redirect', static function ( $location ) {
+            throw new Page_Creation_Redirect( $location );
+        } );
         try {
             do_action( 'admin_post_jp_permissions_add_subpage' );
             $this->fail( 'Expected redirect.' );
@@ -38,7 +36,8 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
             $this->assertNotFalse( wp_next_scheduled( 'wp_scheduled_auto_draft_delete' ) );
             $this->pages['created'] = $child[0]->ID;
         } finally {
-            $_GET = $_REQUEST = [];
+            $_GET = [];
+            $_REQUEST = $_GET;
             remove_all_filters( 'wp_redirect' );
         }
     }
@@ -48,7 +47,8 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
         foreach ( [ [], [ 'parent' => $this->pages['tennis'] ] ] as $params ) {
             $request = new WP_REST_Request( 'POST', '/wp/v2/pages' );
             $request->set_param( 'title', 'Denied' );
-            foreach ( $params as $key => $value ) { $request->set_param( $key, $value ); }
+            foreach ( $params as $key => $value ) {
+                $request->set_param( $key, $value ); }
             $response = rest_get_server()->dispatch( $request );
             $this->assertSame( 403, $response->get_status() );
             $this->assertSame( 'jp_permissions_forbidden_parent', $response->get_data()['code'] );
@@ -72,7 +72,9 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
         wp_set_current_user( $this->users['fb'] );
         $GLOBALS['pagenow'] = 'post-new.php';
         $_GET = [ 'post_type' => 'page' ];
-        add_filter( 'wp_redirect', static function ( $location ) { throw new Page_Creation_Redirect( $location ); } );
+        add_filter( 'wp_redirect', static function ( $location ) {
+            throw new Page_Creation_Redirect( $location );
+        } );
         try {
             do_action( 'load-post-new.php' );
             $this->fail( 'Expected redirect.' );
@@ -95,13 +97,16 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
         wp_set_current_user( $this->users['fb'] );
         $GLOBALS['pagenow'] = 'edit.php';
         $GLOBALS['typenow'] = 'page';
-        $_GET = $_REQUEST = [ 'post_type' => 'page' ];
-        $GLOBALS['menu'] = $GLOBALS['submenu'] = [];
-        $GLOBALS['_wp_menu_nopriv'] = $GLOBALS['_wp_submenu_nopriv'] = [];
+        $_GET = [ 'post_type' => 'page' ];
+        $_REQUEST = $_GET;
+        $GLOBALS['menu'] = [];
+        $GLOBALS['submenu'] = $GLOBALS['menu'];
+        $GLOBALS['_wp_menu_nopriv'] = [];
+        $GLOBALS['_wp_submenu_nopriv'] = $GLOBALS['_wp_menu_nopriv'];
         $GLOBALS['wp_did_header'] = false;
 
         try {
-            jp_test_build_admin_menu();
+            $this->build_admin_menu();
             $this->assertFalse( has_action( 'admin_menu', [ \JayPee\Permissions\PageCreation::class, 'remove_add_new_menu' ] ) );
             $this->assertSame( 10, has_action( 'admin_init', [ \JayPee\Permissions\PageCreation::class, 'remove_add_new_menu' ] ) );
             remove_action( 'admin_init', 'wp_admin_headers' );
@@ -119,14 +124,16 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
             $this->assertSame( 'edit.php?post_type=page', get_admin_page_parent() );
             $this->assertTrue( user_can_access_admin_page() );
             $this->assertNotContains( 'post-new.php?post_type=page', wp_list_pluck( $GLOBALS['submenu']['edit.php?post_type=page'] ?? [], 2 ) );
-            $_GET = $_REQUEST = [ 'post_type' => 'post' ];
+            $_GET = [ 'post_type' => 'post' ];
+            $_REQUEST = $_GET;
             $GLOBALS['typenow'] = 'post';
             $GLOBALS['parent_file'] = '';
             $this->assertFalse( user_can_access_admin_page() );
         } catch ( WPDieException $exception ) {
             $this->fail( 'The Pages screen was denied: ' . $exception->getMessage() );
         } finally {
-            $_GET = $_REQUEST = [];
+            $_GET = [];
+            $_REQUEST = $_GET;
             $GLOBALS['pagenow'] = 'edit.php';
             $GLOBALS['typenow'] = '';
         }
@@ -143,5 +150,11 @@ final class Page_Creation_Integration_Test extends WP_UnitTestCase {
                 $this->assertTrue( str_contains( $message, 'not allowed' ) || str_contains( $message, 'only administrators' ) );
             }
         }
+    }
+
+    /** Builds the admin menu the way wp-admin does, with the globals menu.php reads and writes. */
+    private function build_admin_menu(): void {
+        global $menu, $submenu, $pagenow, $typenow, $_wp_menu_nopriv, $_wp_submenu_nopriv;
+        require ABSPATH . 'wp-admin/menu.php';
     }
 }

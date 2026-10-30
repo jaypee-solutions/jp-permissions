@@ -11,3 +11,7 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 ### Domain docs
 
 Single-context: root `GLOSSARY.md` plus `docs/adr/`. See `docs/agents/domain.md`.
+
+### Testing
+
+Before starting wp-env or running integration/E2E tests, read `docs/agents/testing.md`.

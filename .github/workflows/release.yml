@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     container: composer:2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     container: composer:2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress
@@ -38,7 +38,13 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          coverage: none
 
       - name: Install gettext
         run: sudo apt-get update && sudo apt-get install --yes gettext
@@ -71,7 +77,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           files: ${{ steps.zip.outputs.path }}
           body_path: release-notes.md

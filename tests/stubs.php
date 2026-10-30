@@ -172,5 +172,5 @@ function get_role( string $role ) {
 }
 
 function add_role( string $role, string $name, array $capabilities ): void {
-    $GLOBALS['jp_permissions_test_roles'][ $role ] = (object) array( 'name' => $name, 'capabilities' => $capabilities );
+    $GLOBALS['jp_permissions_test_roles'][ $role ] = (object) [ 'name' => $name, 'capabilities' => $capabilities ];
 }

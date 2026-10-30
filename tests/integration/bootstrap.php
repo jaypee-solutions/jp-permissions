@@ -1,15 +1,29 @@
 <?php
+/**
+ * WordPress integration-test bootstrap.
+ *
+ * @package JayPee\Permissions
+ */
 
 declare( strict_types = 1 );
-
-require dirname( __DIR__, 2 ) . '/vendor/autoload.php';
 
 if ( ! defined( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) ) {
     define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', dirname( __DIR__, 2 ) . '/vendor/yoast/phpunit-polyfills' );
 }
 
+require dirname( __DIR__, 2 ) . '/vendor/autoload.php';
+require_once getenv( 'WP_TESTS_DIR' ) . '/includes/functions.php';
+
+tests_add_filter(
+    'muplugins_loaded',
+    static function (): void {
+        require_once dirname( __DIR__, 2 ) . '/jp-permissions.php';
+    }
+);
+
 require getenv( 'WP_TESTS_DIR' ) . '/includes/bootstrap.php';
-require_once dirname( __DIR__, 2 ) . '/jp-permissions.php';
+
+// Activation registers the Branch Editor role and the uninstall hook, as on a real site.
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
 $plugin_basename = plugin_basename( \JayPee\Permissions\PLUGIN_FILE );
 if ( ! is_plugin_active( $plugin_basename ) ) {
@@ -19,8 +33,7 @@ if ( ! is_plugin_active( $plugin_basename ) ) {
 require_once __DIR__ . '/class-branch-fixtures.php';
 
 /**
- * A handler reaching exit()/die() (AJAX, redirects) ends PHPUnit with status 0
- * and silently skips the remaining tests; fail the run unless PHPUnit finished.
+ * Detect handlers that terminate PHP before PHPUnit can report a result.
  */
 final class Integration_Run_Completion implements \PHPUnit\Runner\AfterLastTestHook {
 

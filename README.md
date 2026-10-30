@@ -26,15 +26,15 @@ Group membership never reduces an Editor's or Administrator's access. Pages-list
 Page Branches does not manage site navigation. Configure the site to list branch pages automatically—for example, use the **Page List** block or a subpage listing on branch pages—so new pages created with Add subpage appear without an Administrator updating a menu. A hand-curated menu or Navigation block still requires an Administrator to add new pages (ADR 0014).
 
 Scaffolded from [jaypee-solutions/wp-plugin-template](https://github.com/jaypee-solutions/wp-plugin-template).
-Scaffolding changes (CI, scripts, hooks, lint/test config) arrive as Renovate
-PRs against `.copier-answers.yml` and are applied with `copier update` — edit
-them in the template, not here.
+Scaffolding changes (CI, scripts, hooks, lint/test config) arrive as pull requests
+from the `template-update.yml` workflow, which runs `copier update` — edit them in
+the template, not here.
 
 ## Requirements
 
 - PHP 8.0+
 - WordPress 7.1+
-- Composer, Node 20+, and Docker or Podman (for `wp-env`)
+- Composer, Node 22.13+ (wp-env 12), and Docker or Podman (for `wp-env`)
 
 ## Development
 

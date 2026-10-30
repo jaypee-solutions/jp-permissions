@@ -1,6 +1,6 @@
 {
-	"core": "WordPress/WordPress",
-	"phpVersion": "8.2",
+	"core": "https://wordpress.org/wordpress-7.1.4.zip",
+	"phpVersion": "8.5",
 	"plugins": [
 		"."
 	],

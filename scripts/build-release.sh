@@ -18,13 +18,13 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 SLUG="jp-permissions"
-PHP_SCOPER_VERSION="0.18.19"
+PHP_SCOPER_VERSION="0.18.20"
 
 # SHA-256 of the pinned php-scoper.phar. A version tag is not a content pin:
 # GitHub release assets can be replaced under an existing tag, and this PHAR
 # rewrites the code that ends up in the shipped ZIP. Bump it together with
 # PHP_SCOPER_VERSION; the build refuses to run on a mismatch.
-PHP_SCOPER_SHA256="170fb84bd3390defb30f99f7dc39c9a89d10c29973accc26f31c00abc5b25933"
+PHP_SCOPER_SHA256="5e35e4a89ea53b2c70a19bfa8a856e4f9080aa12eb13a5bce650bb69d08eb122"
 
 "$ROOT_DIR/scripts/check-version.sh" "${1:-}"
 
