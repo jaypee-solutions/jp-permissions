@@ -1,0 +1,15 @@
+node_modules/
+vendor/
+build/
+playwright-report/
+test-results/
+.wp-env/
+.phpunit.cache/
+.phpunit.result.cache
+languages/*.mo
+*.log
+.DS_Store
+
+
+# APM dependencies
+apm_modules/

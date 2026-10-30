@@ -1,0 +1,77 @@
+# Stamped in by jaypee-solutions/wp-plugin-template — changes belong in the
+# template and arrive here through `copier update`.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container: composer:2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: PHPCS (WordPress Coding Standards)
+        run: composer lint
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    container: composer:2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: PHPUnit
+        run: composer test
+
+  release:
+    needs: [lint, unit-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gettext
+        run: sudo apt-get update && sudo apt-get install --yes gettext
+
+      - name: Build release ZIP
+        run: bash scripts/build-release.sh "${{ github.ref }}"
+
+      - name: Determine ZIP path
+        id: zip
+        run: |
+          zips=( build/jp-permissions-v*.zip )
+          if [[ ${#zips[@]} -ne 1 || ! -f "${zips[0]}" ]]; then
+            echo "Expected exactly one ZIP, found ${#zips[@]}" >&2
+            exit 1
+          fi
+          echo "path=${zips[0]}" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "${zips[0]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Extract changelog section
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if ! awk -v ver="$version" '
+            /^## \[/ { if (found) exit; if (index($0, "## [" ver "]") == 1) found=1; next }
+            found && /^\[[^]]*\]:/ { exit }
+            found { print }
+            END { if (!found) exit 1 }
+          ' CHANGELOG.md > release-notes.md; then
+            echo "Version section [${version}] not found in CHANGELOG.md" >&2
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          files: ${{ steps.zip.outputs.path }}
+          body_path: release-notes.md

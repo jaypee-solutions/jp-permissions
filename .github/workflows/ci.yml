@@ -1,0 +1,55 @@
+# Stamped in by jaypee-solutions/wp-plugin-template — changes belong in the
+# template and arrive here through `copier update`.
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container: composer:2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: PHPCS (WordPress Coding Standards)
+        run: composer lint
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    container: composer:2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: PHPUnit
+        run: composer test
+
+  build:
+    # Builds the release ZIP on every change, so a broken php-scoper run surfaces
+    # here and not on the tag that was supposed to ship.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gettext
+        run: sudo apt-get update && sudo apt-get install --yes gettext
+
+      - name: Build release ZIP
+        run: bash scripts/build-release.sh
+
+      - name: Verify bundled dependencies are prefixed
+        run: |
+          unzip -l build/jp-permissions-v*.zip > /dev/null
+          if grep -rqs --include='*.php' -E '^[[:space:]]*namespace[[:space:]]+YahnisElsts' build/*/vendor; then
+            echo "Bundled dependencies are not prefixed." >&2
+            exit 1
+          fi

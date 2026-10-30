@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier
+_commit: v1.1.1
+_src_path: gh:jaypee-solutions/wp-plugin-template
+email: support@jaypee.solutions
+full_name: Jan-Peter Alten
+github_username: jaypee-solutions
+option_prefix: jp_permissions
+php_namespace: JayPee\Permissions
+plugin_description: JP Permissions for WordPress is a WordPress plugin.
+plugin_name: JP Permissions for WordPress
+plugin_slug: jp-permissions
+puc_update_url: https://github.com/jaypee-solutions/jp-permissions/
+text_domain: jp-permissions
+wc_dependent: false
