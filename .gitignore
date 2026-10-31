@@ -13,3 +13,5 @@ languages/*.mo
 
 # APM dependencies
 apm_modules/
+# APM-deployed skills, recreated by `apm install`
+.agents/

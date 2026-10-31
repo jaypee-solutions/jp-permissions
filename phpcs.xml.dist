@@ -4,6 +4,7 @@
 
     <file>jp-permissions.php</file>
     <file>includes</file>
+    <file>tests</file>
 
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
@@ -29,6 +30,56 @@
         <!-- Light docblocks instead of full @param/@return documentation. -->
         <exclude name="Squiz.Commenting"/>
         <exclude name="Generic.Commenting.DocComment"/>
+    </rule>
+
+    <!-- Enforce the project style the exclusions above make room for. -->
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+    <rule ref="Generic.WhiteSpace.DisallowTabIndent"/>
+
+    <!-- Test-only exceptions: integration tests simulate requests and fixtures the way WordPress core's own tests do. -->
+    <rule ref="WordPress.Security">
+        <!-- Tests set superglobals without nonces and throw exceptions carrying redirect URLs. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WP.GlobalVariablesOverride">
+        <!-- Tests set $pagenow, $typenow and friends to simulate admin screens. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.NamingConventions.ValidHookName">
+        <!-- Tests fire core hooks such as load-post-new.php by their real names. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WP.Capabilities.Unknown">
+        <!-- Tests check the plugin's own meta capabilities. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WP.AlternativeFunctions">
+        <!-- Fixtures and the integration bootstrap use plain file functions. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.DB.DirectDatabaseQuery">
+        <!-- Fixtures write states the API refuses, such as hierarchy cycles. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.PHP.DiscouragedPHPFunctions">
+        <!-- base64 fixtures and token-storage checks. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+        <!-- PHPUnit file names follow their test classes. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="Generic.Files.OneObjectStructurePerFile">
+        <!-- Test doubles live next to the tests that use them. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed">
+        <!-- WordPress function stubs keep core signatures. -->
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+    <rule ref="Universal.Files.SeparateFunctionsFromOO">
+        <!-- WordPress stubs define functions and classes such as WPDieException side by side. -->
+        <exclude-pattern>*/tests/stubs.php</exclude-pattern>
     </rule>
 
     <rule ref="WordPress.WP.I18n">

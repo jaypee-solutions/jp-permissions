@@ -158,7 +158,6 @@ final class Authorization_Integration_Test extends WP_UnitTestCase {
             $response = rest_get_server()->dispatch( $request );
             $this->assertSame( 403, $response->get_status() );
         }
-
     }
 
     public function test_system_context_and_hierarchy_cycles_do_not_block_or_grant(): void {

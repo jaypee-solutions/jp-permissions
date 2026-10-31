@@ -4,16 +4,15 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [ '**' ]
+  workflow_dispatch:
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     container: composer:2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress
@@ -25,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     container: composer:2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress
@@ -33,12 +32,65 @@ jobs:
       - name: PHPUnit
         run: composer test
 
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Start WordPress
+        run: npm run env:start
+
+      - name: Install Playwright browser
+        run: npm run test:install
+
+      - name: WordPress integration tests
+        run: npm run test:integration
+
+      - name: Playwright E2E tests
+        run: npm run test:e2e:run
+
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-artifacts
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+
+      - name: Stop WordPress
+        if: always()
+        run: npm run env:stop
+
   build:
     # Builds the release ZIP on every change, so a broken php-scoper run surfaces
     # here and not on the tag that was supposed to ship.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          coverage: none
 
       - name: Install gettext
         run: sudo apt-get update && sudo apt-get install --yes gettext

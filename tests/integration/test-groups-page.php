@@ -301,7 +301,8 @@ final class Groups_Page_Integration_Test extends WP_UnitTestCase {
     }
 
     private function submit_delete_form( array $post ): array {
-        $_POST = $_REQUEST = $post;
+        $_POST = $post;
+        $_REQUEST = $_POST;
         $_GET = [];
         $redirect = static function ( string $location ): void {
             throw new Groups_Page_Redirect( $location );

@@ -74,7 +74,6 @@ final class Root_Lock_Integration_Test extends WP_UnitTestCase {
         $this->assertSame( 'publish', get_post_field( 'post_status', $this->pages['football'] ) );
         $this->assertSame( 'youth', get_post_field( 'post_name', $this->pages['youth'] ) );
         $this->assertSame( 'publish', get_post_field( 'post_status', $this->pages['youth'] ) );
-
     }
 
     public function test_administrators_can_change_root_slug_and_status(): void {

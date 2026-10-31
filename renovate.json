@@ -2,6 +2,18 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "prHourlyLimit": 5,
+  "packageRules": [
+    {
+      "description": "Hold the WordPress test library on PHPUnit 9 until its compatibility is intentionally upgraded.",
+      "matchPackageNames": ["phpunit/phpunit"],
+      "allowedVersions": "<10"
+    },
+    {
+      "description": "Hold WordPress test-library polyfills on the 1.x line.",
+      "matchPackageNames": ["yoast/phpunit-polyfills"],
+      "allowedVersions": "<2"
+    }
+  ],
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": ["before 10am on Monday"]

@@ -7,14 +7,14 @@ trait Branch_Fixtures {
     protected array $pages = [];
     protected array $users = [];
 
-    protected function setUp(): void {
-        parent::setUp();
+    public function set_up(): void {
+        parent::set_up();
         $this->create_pages();
         $this->create_users();
         $this->write_group_configuration();
     }
 
-    protected function tearDown(): void {
+    public function tear_down(): void {
         wp_set_current_user( $this->users['admin'] );
         foreach ( $this->users as $user_id ) {
             wp_delete_user( $user_id );
@@ -23,7 +23,7 @@ trait Branch_Fixtures {
             wp_delete_post( $page_id, true );
         }
         delete_option( 'jp_permissions_groups' );
-        parent::tearDown();
+        parent::tear_down();
     }
 
     protected function create_pages(): void {
