@@ -48,24 +48,6 @@ jobs:
         # change update behaviour.
         run: pipx install "copier>=9,<10"
 
-      # copier clones the private template over HTTPS; authenticate only that
-      # clone. Scoped to the exact _src_path so the token can't attach to any
-      # other github.com clone in this job.
-      - name: Authenticate template clone
-        env:
-          TEMPLATE_UPDATE_TOKEN: ${{ secrets.TEMPLATE_UPDATE_TOKEN }}
-        run: |
-          src="$(sed -nE 's/^_src_path:[[:space:]]*//p' .copier-answers.yml)"
-          if [[ -z "$src" ]]; then
-            echo "::error::_src_path missing or empty in .copier-answers.yml" >&2
-            exit 1
-          fi
-          if [[ "$src" != https://github.com/* ]]; then
-            echo "::error::_src_path must be an https://github.com/ URL, got: $src" >&2
-            exit 1
-          fi
-          authed="$(printf '%s' "$src" | sed -E "s#^https://#https://x-access-token:${TEMPLATE_UPDATE_TOKEN}@#")"
-          git config --global url."${authed}".insteadOf "${src}"
 
       - name: Configure git identity
         run: |
@@ -73,7 +55,16 @@ jobs:
           git config user.email "support@jaypee.solutions"
 
       - name: copier update
-        run: copier update --defaults --trust --skip-tasks
+        # Token exists only in this step's process env (GIT_CONFIG_*), scoped
+        # to the exact template URL; nothing is written to any git config file.
+        env:
+          TEMPLATE_UPDATE_TOKEN: ${{ secrets.TEMPLATE_UPDATE_TOKEN }}
+        run: |
+          src="$(bash .github/scripts/template-src-url.sh)"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0="url.https://x-access-token:${TEMPLATE_UPDATE_TOKEN}@${src#https://}.insteadOf"
+          export GIT_CONFIG_VALUE_0="$src"
+          copier update --defaults --trust --skip-tasks
 
       - name: Open PR
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
