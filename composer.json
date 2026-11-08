@@ -30,9 +30,10 @@
         "sort-packages": true
     },
     "scripts": {
-        "lint": "phpcs && scripts/check-test-seams.sh",
+        "lint": "phpcs && scripts/check-test-seams.sh && scripts/check-i18n.sh && scripts/check-hook-names.sh",
         "lint:fix": "phpcbf",
         "test": "phpunit",
-        "build": "scripts/build-release.sh"
+        "build": "scripts/build-release.sh",
+        "hooks:check": "scripts/check-git-hooks.sh"
     }
 }

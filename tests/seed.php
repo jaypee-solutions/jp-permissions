@@ -118,5 +118,8 @@ update_option( 'jp_permissions_groups', [
     ],
 ] );
 
+// Add the plugin's fixtures below. Keep seeding idempotent: look up records by
+// stable SKU or slug before creating them, since the runner seeds an existing
+// database before every E2E run. Do not rely on generated post/user IDs.
 
 WP_CLI::success( 'Seed complete.' );
