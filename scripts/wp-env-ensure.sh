@@ -69,13 +69,18 @@ DOCKER_SHIM
 	chmod +x "$_docker_shim_dir/docker"
 	export PATH="$_docker_shim_dir:$PATH"
 	# shellcheck disable=SC2064
-	trap "rm -rf '$_docker_shim_dir'" EXIT
+	cleanup_docker_shim() {
+		rm -rf "$_docker_shim_dir"
+	}
+	trap cleanup_docker_shim EXIT
 fi
 
-export WP_ENV_HOME="${WP_ENV_HOME:-./.wp-env}"
+source "$ROOT_DIR/scripts/e2e-worktree.sh"
+jps_e2e_configure_worktree "$ROOT_DIR"
+jps_e2e_acquire_lock "$ROOT_DIR"
 
-WP_ENV_URL="${WP_ENV_URL:-http://localhost:8888}"
-WP_ENV_TESTS_URL="${WP_ENV_TESTS_URL:-http://localhost:8889}"
+WP_ENV_URL="${WP_ENV_URL:-http://localhost:${WP_ENV_PORT}}"
+WP_ENV_TESTS_URL="${WP_ENV_TESTS_URL:-http://localhost:${WP_ENV_TESTS_PORT}}"
 WP_ENV_TITLE="${WP_ENV_TITLE:-$PLUGIN_DIR_NAME}"
 WP_ENV_ADMIN_USER="${WP_ENV_ADMIN_USER:-admin}"
 WP_ENV_ADMIN_PASSWORD="${WP_ENV_ADMIN_PASSWORD:-password}"

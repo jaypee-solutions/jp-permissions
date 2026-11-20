@@ -1,4 +1,5 @@
-import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { test, expect, type Page } from './support/fixtures';
+import type { APIRequestContext } from '@playwright/test';
 
 const ADMIN_USER = process.env.WP_ADMIN_USER ?? 'admin';
 const ADMIN_PASS = process.env.WP_ADMIN_PASS ?? 'password';

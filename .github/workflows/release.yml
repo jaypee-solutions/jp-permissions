@@ -14,8 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Install gettext
+        run: apk add --no-cache gettext
+
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress
+
+      - name: Download WordPress source for hook checks
+        run: bash scripts/fetch-hook-sources.sh
 
       - name: PHPCS (WordPress Coding Standards)
         run: composer lint

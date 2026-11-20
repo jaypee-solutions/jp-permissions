@@ -1,0 +1,109 @@
+# Hook names check-hook-names.sh accepts without finding them in the WordPress source.
+#
+# One fnmatch pattern per line (`*` matches any text). The source lookup ignores
+# definitions whose only dynamic part is trailing (do_action( "edit_{$taxonomy}" )),
+# because they would vouch for every typo. List those families here, as narrowly as
+# the family allows; never a whole namespace (`wp_*`, `admin_*`).
+#
+# Your own prefix (jp_permissions_) is always accepted and needs no entry. Add other
+# prefixes you own (a companion plugin, a vendored library) as `acme_*` lines.
+
+# Plugin Update Checker (vendored under vendor/, so not in the WordPress source).
+puc_manual_check_message-*
+
+# Options and transients: {$option} / {$transient} is any name.
+option_*
+pre_option_*
+default_option_*
+add_option_*
+update_option_*
+pre_update_option_*
+sanitize_option_*
+site_option_*
+pre_site_option_*
+update_site_option_*
+transient_*
+pre_transient_*
+set_transient_*
+pre_set_transient_*
+site_transient_*
+pre_site_transient_*
+set_site_transient_*
+pre_set_site_transient_*
+
+# Translation: {$domain} is the text domain.
+gettext_*
+ngettext_*
+
+# Admin screens: {$hook_suffix}, {$screen->id} or {$action} is any registered page.
+admin_action_*
+admin_head-*
+admin_footer-*
+admin_print_scripts-*
+admin_print_styles-*
+admin_print_footer_scripts-*
+load-*
+bulk_actions-*
+handle_bulk_actions-*
+views_*
+set_screen_option_*
+add_meta_boxes_*
+network_admin_edit_*
+admin_post_*
+wp_ajax_*
+media_upload_*
+login_form_*
+
+# Plugins: {$plugin} is `folder/file.php`.
+activate_*
+deactivate_*
+plugin_action_links_*
+network_admin_plugin_action_links_*
+after_plugin_row_*
+in_plugin_update_message-*
+update_plugins_*
+auto_update_*
+
+# Posts, post types and taxonomies: {$post_type} / {$taxonomy} is any registered name.
+save_post_*
+registered_post_type_*
+registered_taxonomy_*
+post_type_labels_*
+taxonomy_labels_*
+create_*
+created_*
+edit_*
+edited_*
+delete_*
+saved_*
+# Post status transitions: {$old_status}_to_{$new_status} for every status.
+new_to_*
+draft_to_*
+auto-draft_to_*
+pending_to_*
+publish_to_*
+future_to_*
+private_to_*
+trash_to_*
+inherit_to_*
+
+# REST API: {$post_type} is any registered name.
+rest_prepare_*
+rest_insert_*
+rest_after_insert_*
+rest_pre_insert_*
+rest_delete_*
+
+# Front end, blocks and Customizer.
+shortcode_atts_*
+do_feed_*
+get_template_part_*
+render_block_*
+current_theme_supports-*
+customize_sanitize_*
+customize_value_*
+customize_preview_*
+customize_save_*
+customize_update_*
+customize_validate_*
+requests-*
